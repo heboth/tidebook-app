@@ -3,11 +3,13 @@ import '../services/auth_service.dart';
 import '../theme/gonordic_theme.dart';
 import '../widgets/gonordic_banner.dart';
 import 'booking_wizard_screen.dart';
+import 'destination_guide_screen.dart';
 import 'login_screen.dart';
 import 'profile_screen.dart';
 
 class ExploreScreen extends StatefulWidget {
-  const ExploreScreen({super.key});
+  final void Function(int tabIndex)? onNavigateToTab;
+  const ExploreScreen({super.key, this.onNavigateToTab});
 
   @override
   State<ExploreScreen> createState() => _ExploreScreenState();
@@ -17,8 +19,105 @@ class _ExploreScreenState extends State<ExploreScreen> {
   String _routeId = 'ROUTE-CPH-OSL';
   String _tripType = 'CRUISE';
   DateTime _date = DateTime.now().add(const Duration(days: 1));
-  final int _adults = 2;
-  final bool _hasVehicle = true;
+  int _adults = 2;
+  int _children = 0;
+  bool _hasVehicle = true;
+
+  void _showPassengerModal() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setModalState) {
+            return Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Vælg Rejsende & Køretøj', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('Voksne', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
+                      Row(
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.remove_circle_outline),
+                            onPressed: _adults > 1 ? () {
+                              setModalState(() => _adults--);
+                              setState(() {});
+                            } : null,
+                          ),
+                          Text('$_adults', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                          IconButton(
+                            icon: const Icon(Icons.add_circle_outline),
+                            onPressed: _adults < 9 ? () {
+                              setModalState(() => _adults++);
+                              setState(() {});
+                            } : null,
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('Børn (0-15 år)', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
+                      Row(
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.remove_circle_outline),
+                            onPressed: _children > 0 ? () {
+                              setModalState(() => _children--);
+                              setState(() {});
+                            } : null,
+                          ),
+                          Text('$_children', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                          IconButton(
+                            icon: const Icon(Icons.add_circle_outline),
+                            onPressed: _children < 9 ? () {
+                              setModalState(() => _children++);
+                              setState(() {});
+                            } : null,
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  const Divider(height: 20),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('Medbring bil / køretøj', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
+                    subtitle: const Text('Personbil under 1.85m højde', style: TextStyle(fontSize: 12)),
+                    value: _hasVehicle,
+                    activeThumbColor: GoNordicTheme.pine,
+                    onChanged: (val) {
+                      setModalState(() => _hasVehicle = val);
+                      setState(() {});
+                    },
+                  ),
+                  const SizedBox(height: 14),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      child: const Text('Bekræft'),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -49,9 +148,12 @@ class _ExploreScreenState extends State<ExploreScreen> {
       ),
       body: ListView(
         children: [
-          const GoNordicBanner(
-            badgeText: 'MINICRUISE TILBUD',
-            text: 'Sejl København-Oslo tur/retur fra kun 890 DKK',
+          InkWell(
+            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DestinationGuideScreen())),
+            child: const GoNordicBanner(
+              badgeText: 'MINICRUISE TILBUD',
+              text: 'Sejl København-Oslo tur/retur fra kun 890 DKK →',
+            ),
           ),
           _buildHero(),
           _buildProfileBar(user),
@@ -142,30 +244,36 @@ class _ExploreScreenState extends State<ExploreScreen> {
 
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: GoNordicTheme.border),
       ),
-      child: Row(
-        children: [
-          const Icon(Icons.account_circle, color: GoNordicTheme.teal, size: 26),
-          const SizedBox(width: 8),
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const LoginScreen())).then((_) => setState(() {})),
+          child: const Padding(
+            padding: EdgeInsets.all(12),
+            child: Row(
               children: [
-                Text('Log ind for at bruge dine gemte data', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12)),
-                Text('Udfylder bilnummer og kontaktoplysninger automatisk.', style: TextStyle(fontSize: 10, color: GoNordicTheme.textSecondary)),
+                Icon(Icons.account_circle, color: GoNordicTheme.teal, size: 26),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Log ind for at bruge dine gemte data', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12)),
+                      Text('Udfylder bilnummer og kontaktoplysninger automatisk.', style: TextStyle(fontSize: 10, color: GoNordicTheme.textSecondary)),
+                    ],
+                  ),
+                ),
+                Text('Log ind →', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: GoNordicTheme.teal)),
               ],
             ),
           ),
-          TextButton(
-            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const LoginScreen())).then((_) => setState(() {})),
-            child: const Text('Log ind', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -223,16 +331,43 @@ class _ExploreScreenState extends State<ExploreScreen> {
                     child: Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(color: GoNordicTheme.sandLight, borderRadius: BorderRadius.circular(10)),
-                      child: Text('${_date.day}/${_date.month}-${_date.year}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.calendar_month, size: 16, color: GoNordicTheme.pine),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              '${_date.day}/${_date.month}-${_date.year}',
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(color: GoNordicTheme.sandLight, borderRadius: BorderRadius.circular(10)),
-                    child: Text('$_adults voksne ${_hasVehicle ? "• Bil" : ""}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                  child: InkWell(
+                    onTap: _showPassengerModal,
+                    child: Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(color: GoNordicTheme.sandLight, borderRadius: BorderRadius.circular(10)),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.people_outline, size: 16, color: GoNordicTheme.pine),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              '$_adults voksne${_children > 0 ? " • $_children børn" : ""}${_hasVehicle ? " • Bil" : ""}',
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
               ],
@@ -242,7 +377,18 @@ class _ExploreScreenState extends State<ExploreScreen> {
               width: double.infinity,
               child: ElevatedButton.icon(
                 onPressed: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (_) => const BookingWizardScreen()));
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => BookingWizardScreen(
+                        initialRouteId: _routeId,
+                        initialTripType: _tripType,
+                        initialDate: _date,
+                        initialAdults: _adults,
+                        hasVehicle: _hasVehicle,
+                      ),
+                    ),
+                  );
                 },
                 icon: const Icon(Icons.search, size: 18),
                 label: const Text('Find Afgange & Book Kahyt →'),
@@ -270,6 +416,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
   }
 
   Widget _buildPriceStrip() {
+    final priceStr = _tripType == 'ONEWAY' ? '590,-' : '890,-';
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -279,24 +426,38 @@ class _ExploreScreenState extends State<ExploreScreen> {
         ),
         const SizedBox(height: 6),
         SizedBox(
-          height: 60,
+          height: 64,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 14),
             itemCount: 14,
             itemBuilder: (ctx, i) {
               final d = DateTime.now().add(Duration(days: i + 1));
+              final isSelected = _date.year == d.year && _date.month == d.month && _date.day == d.day;
               return Container(
                 width: 68,
                 margin: const EdgeInsets.symmetric(horizontal: 3),
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(10), border: Border.all(color: GoNordicTheme.border)),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text('${d.day}/${d.month}', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
-                    const Text('890,-', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: GoNordicTheme.pine)),
-                  ],
+                decoration: BoxDecoration(
+                  color: isSelected ? GoNordicTheme.pine : Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: isSelected ? GoNordicTheme.pineDark : GoNordicTheme.border, width: isSelected ? 1.5 : 1),
+                ),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(10),
+                    onTap: () => setState(() => _date = d),
+                    child: Padding(
+                      padding: const EdgeInsets.all(6),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text('${d.day}/${d.month}', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: isSelected ? Colors.white : GoNordicTheme.textPrimary)),
+                          Text(priceStr, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: isSelected ? GoNordicTheme.lime : GoNordicTheme.pine)),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
               );
             },
@@ -312,8 +473,17 @@ class _ExploreScreenState extends State<ExploreScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('OPLEVELSER OM BORD', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: GoNordicTheme.textSecondary)),
-          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('OPLEVELSER OM BORD', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: GoNordicTheme.textSecondary)),
+              TextButton(
+                onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DestinationGuideScreen())),
+                child: const Text('Se alle guide →', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
           _item('Skandinavisk Gastronomi & Buffeter', '7 Seas buffet og frisk morgenmad.', 'assets/gonordic/images/chef-kitchen.jpg'),
           _item('Panoramadæk & Saloner', 'Udsigt over Kattegat og Oslofjorden.', 'assets/gonordic/images/family-window.jpg'),
           _item('Tax-Free Sea Shop', 'Kosmetik, slik og mærkevarer op til 40% rabat.', 'assets/gonordic/images/taxfree-shop.jpg'),
@@ -326,22 +496,29 @@ class _ExploreScreenState extends State<ExploreScreen> {
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       clipBehavior: Clip.antiAlias,
-      child: Row(
-        children: [
-          Image.asset(img, width: 85, height: 65, fit: BoxFit.cover, errorBuilder: (c, e, s) => Container(width: 85, height: 65, color: GoNordicTheme.pineDark)),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-                  Text(sub, style: const TextStyle(fontSize: 10, color: GoNordicTheme.textSecondary), maxLines: 1, overflow: TextOverflow.ellipsis),
-                ],
+      child: InkWell(
+        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DestinationGuideScreen())),
+        child: Row(
+          children: [
+            Image.asset(img, width: 85, height: 65, fit: BoxFit.cover, errorBuilder: (c, e, s) => Container(width: 85, height: 65, color: GoNordicTheme.pineDark)),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                    Text(sub, style: const TextStyle(fontSize: 10, color: GoNordicTheme.textSecondary), maxLines: 1, overflow: TextOverflow.ellipsis),
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+            const Padding(
+              padding: EdgeInsets.only(right: 8),
+              child: Icon(Icons.chevron_right, color: GoNordicTheme.teal, size: 20),
+            ),
+          ],
+        ),
       ),
     );
   }

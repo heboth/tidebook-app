@@ -5,18 +5,6 @@ import '../models/booking_model.dart';
 import 'api_service.dart';
 import 'seed_data.dart';
 
-class BookingLookupResult {
-  final bool success;
-  final String? errorMessage;
-  final BookingModel? booking;
-
-  const BookingLookupResult({
-    required this.success,
-    this.errorMessage,
-    this.booking,
-  });
-}
-
 class BookingService extends ChangeNotifier {
   static final BookingService _instance = BookingService._internal();
   factory BookingService() => _instance;
@@ -33,6 +21,7 @@ class BookingService extends ChangeNotifier {
   final List<RouteModel> _routes = [];
   final List<DepartureModel> _departures = [];
   final List<BookingModel> _bookings = [];
+  final Map<String, String> _bookingTokens = {};
   BookingModel? _activeBooking;
   bool _isBackendConnected = false;
 
@@ -41,6 +30,12 @@ class BookingService extends ChangeNotifier {
   List<BookingModel> get bookings => List.unmodifiable(_bookings);
   BookingModel? get activeBooking => _activeBooking;
   bool get isBackendConnected => _isBackendConnected;
+
+  String? getBookingToken(String pnr) => _bookingTokens[pnr.trim().toUpperCase()];
+
+  void setBookingToken(String pnr, String token) {
+    _bookingTokens[pnr.trim().toUpperCase()] = token;
+  }
 
   Future<void> syncBackend() async {
     try {
@@ -67,13 +62,31 @@ class BookingService extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Lookup booking with PNR and Email / Last Name (checks live TideRMS backend + local cache)
+  /// Remember booking and its customer booking key
+  void rememberBooking(BookingModel booking, [String? token]) {
+    final effectiveToken = token ?? booking.bookingToken;
+    final cleanPnr = booking.pnr.trim().toUpperCase();
+    if (effectiveToken != null && effectiveToken.isNotEmpty) {
+      _bookingTokens[cleanPnr] = effectiveToken;
+    }
+    final existingIdx = _bookings.indexWhere((b) => b.pnr.toUpperCase() == cleanPnr);
+    final stored = booking.copyWith(bookingToken: effectiveToken);
+    if (existingIdx != -1) {
+      _bookings[existingIdx] = stored;
+    } else {
+      _bookings.insert(0, stored);
+    }
+    _activeBooking = stored;
+    notifyListeners();
+  }
+
+  /// Lookup booking with PNR and Email / Last Name (checks live Core backend + local cache)
   Future<BookingLookupResult> lookupBooking({
     required String pnr,
     required String emailOrLastName,
   }) async {
     final cleanPnr = pnr.trim().toUpperCase();
-    final cleanIdentifier = emailOrLastName.trim().toLowerCase();
+    final cleanIdentifier = emailOrLastName.trim();
 
     // Rejection of Group leader reservation
     if (cleanPnr.startsWith('TB-GRP') || cleanPnr.contains('GRP')) {
@@ -93,23 +106,21 @@ class BookingService extends ChangeNotifier {
       );
     }
 
-    // 1. Check live TideRMS / TideBook Backend on port 4000
+    // 1. Check live Core Backend on port 4000
     try {
-      final remoteBooking = await ApiService().lookupBooking(cleanPnr, cleanIdentifier);
-      if (remoteBooking != null) {
-        final existingIdx = _bookings.indexWhere((b) => b.pnr == remoteBooking.pnr);
-        if (existingIdx != -1) {
-          _bookings[existingIdx] = remoteBooking;
-        } else {
-          _bookings.insert(0, remoteBooking);
+      final res = await ApiService().lookupBooking(cleanPnr, cleanIdentifier);
+      if (res.success && res.booking != null) {
+        if (res.bookingToken != null) {
+          _bookingTokens[cleanPnr] = res.bookingToken!;
         }
-        _activeBooking = remoteBooking;
-        notifyListeners();
-        return BookingLookupResult(success: true, booking: remoteBooking);
+        rememberBooking(res.booking!, res.bookingToken);
+        return res;
+      } else if (!res.success && res.errorMessage != null && !res.errorMessage!.contains('Kunne ikke forbinde')) {
+        return res;
       }
     } catch (_) {}
 
-    // 2. Fallback to local cached / seed list
+    // 2. Fallback to local cached / seed list (offline / mock)
     try {
       final match = _bookings.firstWhere((b) {
         final matchesPnr = b.pnr.toUpperCase() == cleanPnr ||
@@ -117,9 +128,9 @@ class BookingService extends ChangeNotifier {
         if (!matchesPnr) return false;
 
         final matchesEmail =
-            b.leadContactEmail.toLowerCase() == cleanIdentifier;
+            b.leadContactEmail.toLowerCase() == cleanIdentifier.toLowerCase();
         final lastName = b.leadContactName.split(' ').last.toLowerCase();
-        final matchesLastName = lastName == cleanIdentifier;
+        final matchesLastName = lastName == cleanIdentifier.toLowerCase();
 
         return matchesEmail || matchesLastName;
       });
@@ -136,33 +147,50 @@ class BookingService extends ChangeNotifier {
     }
   }
 
-  /// Perform Mobile Check-In with Backend sync
-  Future<bool> checkInBooking(String pnr) async {
-    try {
-      await ApiService().checkIn(pnr);
-    } catch (_) {}
+  /// Perform Mobile Check-In with Core Backend verification and error handling
+  Future<CheckInResponse> checkInBookingWithResult(
+    String pnr, {
+    String legType = 'OUTBOUND',
+  }) async {
+    final cleanPnr = pnr.trim().toUpperCase();
+    final token = _bookingTokens[cleanPnr] ??
+        (_bookings.any((b) => b.pnr.toUpperCase() == cleanPnr)
+            ? _bookings.firstWhere((b) => b.pnr.toUpperCase() == cleanPnr).bookingToken
+            : null);
 
-    final index = _bookings.indexWhere((b) => b.pnr == pnr);
-    if (index != -1) {
-      final updated = _bookings[index].copyWith(status: 'CHECKED_IN');
-      _bookings[index] = updated;
-      if (_activeBooking?.pnr == pnr) {
-        _activeBooking = updated;
+    final res = await ApiService().checkIn(cleanPnr, bookingToken: token, legType: legType);
+
+    if (res.success) {
+      final index = _bookings.indexWhere((b) => b.pnr.toUpperCase() == cleanPnr);
+      if (index != -1) {
+        final current = _bookings[index];
+        final updated = (res.booking ?? current).copyWith(
+          status: 'CHECKED_IN',
+          boardingPasses: res.boardingPasses.isNotEmpty ? res.boardingPasses : current.boardingPasses,
+        );
+        _bookings[index] = updated;
+        if (_activeBooking?.pnr.toUpperCase() == cleanPnr) {
+          _activeBooking = updated;
+        }
+        notifyListeners();
+        return CheckInResponse(success: true, booking: updated, boardingPasses: updated.boardingPasses);
       }
-      notifyListeners();
-      return true;
+      return res;
+    } else {
+      // Check-in was rejected by Core or network failed.
+      // NEVER pretend success when Core says no!
+      return res;
     }
-    return false;
   }
 
-  /// Add newly completed booking and register with TideRMS on port 4000
-  Future<void> addBooking(BookingModel newBooking) async {
-    _bookings.insert(0, newBooking);
-    _activeBooking = newBooking;
-    notifyListeners();
+  /// Convenience boolean method for backward compatibility
+  Future<bool> checkInBooking(String pnr) async {
+    final res = await checkInBookingWithResult(pnr);
+    return res.success;
+  }
 
-    try {
-      await ApiService().createBooking(newBooking);
-    } catch (_) {}
+  /// Add newly completed booking and register token
+  void addBooking(BookingModel newBooking, [String? token]) {
+    rememberBooking(newBooking, token);
   }
 }

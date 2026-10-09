@@ -94,14 +94,31 @@ void main() {
       }
     });
 
-    test('Generates real scannable maritime QR payload with SHA-256 security checksum', () {
-      final payload = QrSecurityService.buildPayload(
-        pnr: 'TIDE-9021',
-        date: '2026-10-10',
-        passengerId: 'P1',
-        cabin: 'CAB-CROW-1101',
-      );
-      expect(payload.startsWith('TB:TIDE-9021:P1:2026-10-10:'), isTrue);
+    test('Validates Core-issued maritime boarding pass QR payload and extracts HMAC', () {
+      const corePayload = 'TB:TIDE-9021:P1:A7F39C20BD8104E2';
+      expect(QrSecurityService.isValidBoardingPassPayload(corePayload), isTrue);
+      expect(QrSecurityService.extractPnr(corePayload), 'TIDE-9021');
+      expect(QrSecurityService.extractPassengerId(corePayload), 'P1');
+      expect(QrSecurityService.extractSecurityCode(corePayload), 'A7F39C20BD8104E2');
+
+      // Invalid / forged formats are rejected
+      expect(QrSecurityService.isValidBoardingPassPayload('INVALID-QR'), isFalse);
+    });
+
+    test('BookingService stores and remembers booking tokens for Core authentication', () {
+      final service = BookingService();
+      service.setBookingToken('TIDE-9021', 'JWT_TEST_TOKEN_2026');
+      expect(service.getBookingToken('TIDE-9021'), 'JWT_TEST_TOKEN_2026');
+    });
+
+    test('ApiService supports configurable API base URL and does not rely on hardcoded localhost:4000', () {
+      ApiService.setBaseUrl('http://api.gonordic.dk:8080');
+      expect(ApiService.baseUrl, 'http://api.gonordic.dk:8080/api');
+      expect(ApiService.healthUrl, 'http://api.gonordic.dk:8080/health');
+
+      // Reset back for local testing
+      ApiService.setBaseUrl('http://localhost:4000');
+      expect(ApiService.baseUrl, 'http://localhost:4000/api');
     });
   });
 }

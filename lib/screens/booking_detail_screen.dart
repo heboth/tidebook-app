@@ -22,16 +22,23 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
   }
 
   void _handleCheckIn() async {
-    final success = await BookingService().checkInBooking(_currentBooking.pnr);
+    final res = await BookingService().checkInBookingWithResult(_currentBooking.pnr);
     if (!mounted) return;
-    if (success) {
+    if (res.success && res.booking != null) {
       setState(() {
-        _currentBooking = _currentBooking.copyWith(status: 'CHECKED_IN');
+        _currentBooking = res.booking!;
       });
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           backgroundColor: GoNordicTheme.success,
           content: Text('✓ Mobil Check-in gennemført! Boardingkort er udstedt.'),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: GoNordicTheme.error,
+          content: Text(res.errorMessage ?? 'Check-in afvist af serveren.'),
         ),
       );
     }

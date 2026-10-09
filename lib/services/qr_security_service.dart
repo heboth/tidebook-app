@@ -1,36 +1,56 @@
-import 'dart:convert';
-import 'package:crypto/crypto.dart';
-
+/// TideBook Maritime QR Helper Service
+///
+/// Boarding pass QR codes are generated and cryptographically signed exclusively
+/// by TideBook Core during mobile check-in (POST /api/bookings/:pnr/check-in).
+/// The client application NEVER stores gate secrets or manufactures boarding passes locally.
 class QrSecurityService {
-  static const String maritimeGateSalt = 'TIDEBOOK-GATE-AUTH-SEC-2026-NORDIC-PASS';
-
-  /// Generates real cryptographic SHA-256 security checksum matching TideBook Gate Scanners
-  static String generateSecurityCode({
-    required String pnr,
-    required String date,
-    String? passengerId,
-    String? cabin,
-  }) {
-    final raw = '$pnr|${passengerId ?? "P1"}|$date|${cabin ?? ""}|$maritimeGateSalt';
-    final bytes = utf8.encode(raw);
-    final digest = sha256.convert(bytes);
-    return digest.toString().substring(0, 8).toUpperCase();
+  /// Extracts the gate security code (HMAC / checksum) from Core's official QR payload.
+  /// Core payload format: `TB:<pnr>:<passengerId>:<hmac>`
+  static String? extractSecurityCode(String? qrPayload) {
+    if (qrPayload == null || qrPayload.isEmpty) return null;
+    final clean = qrPayload.trim();
+    if (clean.toUpperCase().startsWith('TB:')) {
+      final parts = clean.split(':');
+      if (parts.length >= 4) {
+        return parts.sublist(3).join(':').toUpperCase();
+      }
+    }
+    return null;
   }
 
-  /// Builds standardized maritime terminal scannable gate payload
-  static String buildPayload({
-    required String pnr,
-    required String date,
-    String? passengerId,
-    String? cabin,
-  }) {
-    final secCode = generateSecurityCode(
-      pnr: pnr,
-      date: date,
-      passengerId: passengerId,
-      cabin: cabin,
-    );
-    final pid = passengerId ?? 'P1';
-    return 'TB:$pnr:$pid:$date:$secCode';
+  /// Extracts passenger ID from Core's official QR payload.
+  static String? extractPassengerId(String? qrPayload) {
+    if (qrPayload == null || qrPayload.isEmpty) return null;
+    final clean = qrPayload.trim();
+    if (clean.toUpperCase().startsWith('TB:')) {
+      final parts = clean.split(':');
+      if (parts.length >= 3) {
+        return parts[2];
+      }
+    }
+    return null;
+  }
+
+  /// Extracts PNR from Core's official QR payload.
+  static String? extractPnr(String? qrPayload) {
+    if (qrPayload == null || qrPayload.isEmpty) return null;
+    final clean = qrPayload.trim();
+    if (clean.toUpperCase().startsWith('TB:')) {
+      final parts = clean.split(':');
+      if (parts.length >= 2) {
+        return parts[1].toUpperCase();
+      }
+    }
+    return null;
+  }
+
+  /// Checks whether a QR payload matches Core's signed maritime boarding pass format.
+  static bool isValidBoardingPassPayload(String? qrPayload) {
+    if (qrPayload == null || qrPayload.isEmpty) return false;
+    final clean = qrPayload.trim();
+    if (!clean.toUpperCase().startsWith('TB:')) return false;
+    final parts = clean.split(':');
+    return parts.length >= 4 && parts[1].isNotEmpty && parts[2].isNotEmpty && parts[3].isNotEmpty;
   }
 }
+

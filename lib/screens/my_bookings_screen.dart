@@ -46,69 +46,90 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final bookings = BookingService().bookings;
+    return ListenableBuilder(
+      listenable: BookingService(),
+      builder: (context, _) {
+        final bookings = BookingService().bookings;
 
-    return Scaffold(
-      backgroundColor: GoNordicTheme.sand,
-      appBar: AppBar(title: const Text('Mine Bookinger & Boardingkort')),
-      body: ListView(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Card(
-              child: Padding(
-                padding: const EdgeInsets.all(14),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('Find Din Reservation', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
-                    const SizedBox(height: 4),
-                    const Text('Indtast bookingnummer (PNR) og e-mail for at hente dit boardingkort.', style: TextStyle(fontSize: 11, color: GoNordicTheme.textSecondary)),
-                    const SizedBox(height: 12),
-                    TextField(controller: _pnrController, textCapitalization: TextCapitalization.characters, decoration: const InputDecoration(labelText: 'BOOKINGNUMMER (PNR)', hintText: 'F.eks. TIDE-9021')),
-                    const SizedBox(height: 10),
-                    TextField(controller: _emailController, decoration: const InputDecoration(labelText: 'E-MAIL ELLER EFTERNAVN', hintText: 'F.eks. mads.jensen@example.dk')),
-                    if (_searchError != null) ...[
-                      const SizedBox(height: 10),
-                      Text(_searchError!, style: const TextStyle(color: GoNordicTheme.error, fontSize: 12, fontWeight: FontWeight.bold)),
-                    ],
-                    const SizedBox(height: 12),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(onPressed: _searchBooking, icon: const Icon(Icons.search), label: const Text('Find Booking')),
-                    ),
-                    const SizedBox(height: 10),
-                    Wrap(
-                      spacing: 8,
+        return Scaffold(
+          backgroundColor: GoNordicTheme.sand,
+          appBar: AppBar(title: const Text('Mine Bookinger & Boardingkort')),
+          body: ListView(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(14),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Test:', style: TextStyle(fontSize: 11, color: GoNordicTheme.textSecondary)),
-                        ActionChip(label: const Text('TIDE-9021'), onPressed: () => _quickFill('TIDE-9021', 'mads.jensen@example.dk')),
-                        ActionChip(label: const Text('TIDE-4412'), onPressed: () => _quickFill('TIDE-4412', 'henrik.lindqvist@oslo-fjord.no')),
+                        const Text('Find Din Reservation', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
+                        const SizedBox(height: 4),
+                        const Text('Indtast bookingnummer (PNR) og e-mail for at hente dit boardingkort.', style: TextStyle(fontSize: 11, color: GoNordicTheme.textSecondary)),
+                        const SizedBox(height: 12),
+                        TextField(controller: _pnrController, textCapitalization: TextCapitalization.characters, decoration: const InputDecoration(labelText: 'BOOKINGNUMMER (PNR)', hintText: 'F.eks. TIDE-9021')),
+                        const SizedBox(height: 10),
+                        TextField(controller: _emailController, decoration: const InputDecoration(labelText: 'E-MAIL ELLER EFTERNAVN', hintText: 'F.eks. mads.jensen@example.dk')),
+                        if (_searchError != null) ...[
+                          const SizedBox(height: 10),
+                          Text(_searchError!, style: const TextStyle(color: GoNordicTheme.error, fontSize: 12, fontWeight: FontWeight.bold)),
+                        ],
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(onPressed: _searchBooking, icon: const Icon(Icons.search), label: const Text('Find Booking')),
+                        ),
+                        const SizedBox(height: 10),
+                        Wrap(
+                          spacing: 8,
+                          children: [
+                            const Text('Test:', style: TextStyle(fontSize: 11, color: GoNordicTheme.textSecondary)),
+                            ActionChip(label: const Text('TIDE-9021'), onPressed: () => _quickFill('TIDE-9021', 'mads.jensen@example.dk')),
+                            ActionChip(label: const Text('TIDE-4412'), onPressed: () => _quickFill('TIDE-4412', 'henrik.lindqvist@oslo-fjord.no')),
+                          ],
+                        ),
                       ],
                     ),
-                  ],
+                  ),
                 ),
               ),
-            ),
+              const SizedBox(height: 12),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 18),
+                child: Text('DINE RESERVATIONER', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: GoNordicTheme.textSecondary)),
+              ),
+              const SizedBox(height: 6),
+              ...bookings.map((b) => BookingCard(
+                booking: b,
+                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => BookingDetailScreen(booking: b))),
+                onShowBoardingPass: () => Navigator.push(context, MaterialPageRoute(builder: (_) => BoardingPassScreen(booking: b))),
+                onCheckIn: () async {
+                  final res = await BookingService().checkInBookingWithResult(b.pnr);
+                  if (!context.mounted) return;
+                  if (res.success) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        backgroundColor: GoNordicTheme.success,
+                        content: Text('✓ Mobil Check-in gennemført! Boardingkort udstedt.'),
+                      ),
+                    );
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        backgroundColor: GoNordicTheme.error,
+                        content: Text(res.errorMessage ?? 'Check-in afvist af serveren.'),
+                      ),
+                    );
+                  }
+                  setState(() {});
+                },
+              )),
+            ],
           ),
-          const SizedBox(height: 12),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 18),
-            child: Text('DINE RESERVATIONER', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: GoNordicTheme.textSecondary)),
-          ),
-          const SizedBox(height: 6),
-          ...bookings.map((b) => BookingCard(
-            booking: b,
-            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => BookingDetailScreen(booking: b))),
-            onShowBoardingPass: () => Navigator.push(context, MaterialPageRoute(builder: (_) => BoardingPassScreen(booking: b))),
-            onCheckIn: () {
-              BookingService().checkInBooking(b.pnr);
-              setState(() {});
-            },
-          )),
-        ],
-      ),
+        );
+      },
     );
   }
 }

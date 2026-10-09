@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
 import '../models/user_model.dart';
 import '../models/booking_model.dart';
+import 'api_service.dart';
+
 
 class AuthResult {
   final bool success;
@@ -21,10 +23,12 @@ class AuthService extends ChangeNotifier {
 
   UserModel? _currentUser;
   String? _activePnr;
+  String? _portalToken;
 
   UserModel? get currentUser => _currentUser;
   bool get isLoggedIn => _currentUser != null || _activePnr != null;
   String? get activePnr => _activePnr;
+  String? get portalToken => _portalToken;
 
   /// Known demo / test accounts with strict role protection
   static final Map<String, Map<String, dynamic>> _knownAccounts = {
@@ -118,6 +122,41 @@ class AuthService extends ChangeNotifier {
       );
     }
 
+    // 1. Authenticate with live TideBook Core portal-login (/api/auth/portal-login)
+    try {
+      final res = await ApiService().portalLogin(usernameOrEmail.trim(), password);
+      if (res != null) {
+        if (res['IsLoggedIn'] == true) {
+          _portalToken = res['token']?.toString();
+          final userJson = res['user'] is Map ? res['user'] as Map<String, dynamic> : null;
+          final userObj = userJson != null
+              ? UserModel(
+                  id: userJson['id']?.toString() ?? 'USR-CUST-01',
+                  username: userJson['username']?.toString() ?? usernameOrEmail,
+                  email: userJson['email']?.toString() ?? (usernameOrEmail.contains('@') ? usernameOrEmail : '$usernameOrEmail@example.dk'),
+                  fullName: userJson['fullName']?.toString() ?? 'Mads Jensen',
+                  role: UserRole.person,
+                )
+              : UserModel(
+                  id: 'USR-CUST-01',
+                  username: usernameOrEmail,
+                  email: usernameOrEmail.contains('@') ? usernameOrEmail : '$usernameOrEmail@example.dk',
+                  fullName: 'Mads Jensen',
+                  role: UserRole.person,
+                );
+          _currentUser = userObj;
+          notifyListeners();
+          return AuthResult(success: true, user: _currentUser);
+        } else {
+          return const AuthResult(
+            success: false,
+            errorMessage: 'Ugyldigt brugernavn eller adgangskode. Prøv igen.',
+          );
+        }
+      }
+    } catch (_) {}
+
+    // 2. Fallback to known accounts when Core backend is not reachable / offline
     final acc = _knownAccounts[key];
     if (acc != null) {
       if (acc['role'] == UserRole.agent) {
@@ -217,6 +256,7 @@ class AuthService extends ChangeNotifier {
   void logout() {
     _currentUser = null;
     _activePnr = null;
+    _portalToken = null;
     notifyListeners();
   }
 }

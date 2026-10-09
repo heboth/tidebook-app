@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme/gonordic_theme.dart';
 import '../widgets/gonordic_banner.dart';
+import 'booking_wizard_screen.dart';
 
 class DestinationGuideScreen extends StatelessWidget {
   const DestinationGuideScreen({super.key});
@@ -41,6 +42,23 @@ class DestinationGuideScreen extends StatelessWidget {
                   'Tag bilen med til Norefjell, Hemsedal, Hafjell eller Trysil. Nem og udhvilet ankomst i Oslo kl. 10:00.',
                   'assets/gonordic/images/ski-lift.jpg',
                 ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const BookingWizardScreen(),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.sailing),
+                    label: const Text('Book MiniCruise Nu →'),
+                  ),
+                ),
+                const SizedBox(height: 24),
               ],
             ),
           ),

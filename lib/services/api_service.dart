@@ -5,12 +5,109 @@ import '../models/route_model.dart';
 import '../models/departure_model.dart';
 import '../models/booking_model.dart';
 
+class BookingLookupResult {
+  final bool success;
+  final BookingModel? booking;
+  final String? bookingToken;
+  final String? errorMessage;
+
+  const BookingLookupResult({
+    required this.success,
+    this.booking,
+    this.bookingToken,
+    this.errorMessage,
+  });
+}
+
+class CheckInResponse {
+  final bool success;
+  final BookingModel? booking;
+  final List<BoardingPassModel> boardingPasses;
+  final String? errorMessage;
+
+  const CheckInResponse({
+    required this.success,
+    this.booking,
+    this.boardingPasses = const [],
+    this.errorMessage,
+  });
+}
+
+class CheckoutSession {
+  final String pnr;
+  final String paymentId;
+  final double amountDkk;
+  final String currency;
+  final String provider;
+  final String? checkoutKey;
+  final String? scriptUrl;
+  final String? bookingToken;
+
+  const CheckoutSession({
+    required this.pnr,
+    required this.paymentId,
+    required this.amountDkk,
+    this.currency = 'DKK',
+    required this.provider,
+    this.checkoutKey,
+    this.scriptUrl,
+    this.bookingToken,
+  });
+
+  factory CheckoutSession.fromJson(Map<String, dynamic> json) {
+    final checkout = json['checkout'] is Map ? json['checkout'] as Map : {};
+    return CheckoutSession(
+      pnr: json['pnr'] ?? '',
+      paymentId: json['paymentId'] ?? '',
+      amountDkk: (json['amountDkk'] as num?)?.toDouble() ?? 0.0,
+      currency: json['currency'] ?? 'DKK',
+      provider: checkout['provider']?.toString() ?? 'simulator',
+      checkoutKey: checkout['checkoutKey']?.toString(),
+      scriptUrl: checkout['scriptUrl']?.toString(),
+      bookingToken: json['bookingToken']?.toString(),
+    );
+  }
+}
+
+class CompletedPaymentResult {
+  final bool success;
+  final String? pnr;
+  final BookingModel? booking;
+  final String? bookingToken;
+  final String? errorMessage;
+
+  const CompletedPaymentResult({
+    required this.success,
+    this.pnr,
+    this.booking,
+    this.bookingToken,
+    this.errorMessage,
+  });
+}
+
+
 class ApiService {
   static final ApiService _instance = ApiService._internal();
   factory ApiService() => _instance;
   ApiService._internal();
 
+  static String? _customBaseUrl;
+
+  /// Configure API root address at runtime (e.g. from settings or environment)
+  static void setBaseUrl(String url) {
+    final clean = url.trim().replaceFirst(RegExp(r'/+$'), '');
+    _customBaseUrl = clean.endsWith('/api') ? clean : '$clean/api';
+  }
+
   static String get baseUrl {
+    if (_customBaseUrl != null && _customBaseUrl!.isNotEmpty) {
+      return _customBaseUrl!;
+    }
+    const envUrl = String.fromEnvironment('TIDEBOOK_API_URL');
+    if (envUrl.isNotEmpty) {
+      final clean = envUrl.trim().replaceFirst(RegExp(r'/+$'), '');
+      return clean.endsWith('/api') ? clean : '$clean/api';
+    }
     try {
       if (Platform.isAndroid) {
         return 'http://10.0.2.2:4000/api';
@@ -19,18 +116,56 @@ class ApiService {
     return 'http://localhost:4000/api';
   }
 
-  static String get healthUrl {
-    try {
-      if (Platform.isAndroid) {
-        return 'http://10.0.2.2:4000/health';
-      }
-    } catch (_) {}
-    return 'http://localhost:4000/health';
+  static String get serverRoot {
+    final b = baseUrl;
+    if (b.endsWith('/api')) {
+      return b.substring(0, b.length - 4);
+    }
+    return b;
   }
+
+  static String get healthUrl => '$serverRoot/health';
 
   Future<Map<String, dynamic>?> checkHealth() async {
     try {
       final res = await http.get(Uri.parse(healthUrl)).timeout(const Duration(seconds: 3));
+      if (res.statusCode == 200) {
+        return jsonDecode(res.body) as Map<String, dynamic>;
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  /// Authenticate customer against Core's /api/auth/portal-login
+  Future<Map<String, dynamic>?> portalLogin(String username, String password) async {
+    try {
+      final res = await http.post(
+        Uri.parse('$baseUrl/auth/portal-login'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'username': username,
+          'password': password,
+          'isAgent': false,
+        }),
+      ).timeout(const Duration(seconds: 5));
+
+      if (res.statusCode == 200) {
+        return jsonDecode(res.body) as Map<String, dynamic>;
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  Future<Map<String, dynamic>?> getPortalSession(String token) async {
+    try {
+      final res = await http.get(
+        Uri.parse('$baseUrl/auth/portal-session'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      ).timeout(const Duration(seconds: 4));
+
       if (res.statusCode == 200) {
         return jsonDecode(res.body) as Map<String, dynamic>;
       }
@@ -60,78 +195,204 @@ class ApiService {
     return null;
   }
 
-  Future<BookingModel?> lookupBooking(String pnr, String email) async {
+  /// Lookup booking with PNR and Email / Last Name (returns booking + bookingToken)
+  Future<BookingLookupResult> lookupBooking(String pnr, String emailOrLastName) async {
     try {
+      final cleanPnr = pnr.trim().toUpperCase();
+      final identifier = emailOrLastName.trim();
+      final body = <String, dynamic>{
+        'pnr': cleanPnr,
+      };
+      if (identifier.contains('@')) {
+        body['email'] = identifier.toLowerCase();
+      } else {
+        body['lastName'] = identifier.toLowerCase();
+      }
+
       final res = await http.post(
         Uri.parse('$baseUrl/bookings/lookup'),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'pnr': pnr, 'email': email}),
-      ).timeout(const Duration(seconds: 4));
+        body: jsonEncode(body),
+      ).timeout(const Duration(seconds: 5));
 
-      if (res.statusCode == 200) {
-        final data = jsonDecode(res.body);
-        if (data['success'] == true && data['booking'] != null) {
-          return BookingModel.fromJson(data['booking'] as Map<String, dynamic>);
-        }
+      final data = jsonDecode(res.body);
+      if (res.statusCode == 200 && data['success'] == true && data['booking'] != null) {
+        final token = data['bookingToken']?.toString();
+        final booking = BookingModel.fromJson(
+          data['booking'] as Map<String, dynamic>,
+          bookingToken: token,
+        );
+        return BookingLookupResult(
+          success: true,
+          booking: booking,
+          bookingToken: token,
+        );
+      } else {
+        return BookingLookupResult(
+          success: false,
+          errorMessage: data['message'] ?? data['error'] ?? 'Booking ikke fundet.',
+        );
       }
-    } catch (_) {}
-    return null;
+    } catch (_) {
+      return const BookingLookupResult(
+        success: false,
+        errorMessage: 'Kunne ikke forbinde til booking-serveren.',
+      );
+    }
   }
 
-  Future<BookingModel?> checkIn(String pnr) async {
+  /// Mobile check-in requiring x-booking-token after PR 4
+  Future<CheckInResponse> checkIn(
+    String pnr, {
+    String? bookingToken,
+    String legType = 'OUTBOUND',
+  }) async {
     try {
-      final res = await http.post(
-        Uri.parse('$baseUrl/bookings/$pnr/check-in'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'legType': 'OUTBOUND'}),
-      ).timeout(const Duration(seconds: 4));
-
-      if (res.statusCode == 200) {
-        final data = jsonDecode(res.body);
-        if (data['success'] == true) {
-          return null; // Signals successful backend check-in
-        }
+      final headers = <String, String>{
+        'Content-Type': 'application/json',
+      };
+      if (bookingToken != null && bookingToken.isNotEmpty) {
+        headers['x-booking-token'] = bookingToken;
       }
-    } catch (_) {}
-    return null;
+
+      final res = await http.post(
+        Uri.parse('$baseUrl/bookings/${pnr.toUpperCase()}/check-in'),
+        headers: headers,
+        body: jsonEncode({'legType': legType}),
+      ).timeout(const Duration(seconds: 6));
+
+      final data = jsonDecode(res.body);
+      if (res.statusCode == 200 && data['success'] == true) {
+        final bookingJson = data['booking'] as Map<String, dynamic>?;
+        final checkInResult = data['checkInResult'] as Map<String, dynamic>?;
+        final rawPasses = checkInResult?['passengerBoardingPasses'] as List?;
+        final passes = rawPasses != null
+            ? rawPasses
+                .map((p) => BoardingPassModel.fromJson(Map<String, dynamic>.from(p as Map)))
+                .toList()
+            : <BoardingPassModel>[];
+
+        BookingModel? updatedBooking;
+        if (bookingJson != null) {
+          updatedBooking = BookingModel.fromJson(bookingJson, bookingToken: bookingToken);
+          if (passes.isNotEmpty && updatedBooking.boardingPasses.isEmpty) {
+            updatedBooking = updatedBooking.copyWith(boardingPasses: passes, status: 'CHECKED_IN');
+          }
+        }
+
+        return CheckInResponse(
+          success: true,
+          booking: updatedBooking,
+          boardingPasses: passes,
+        );
+      } else {
+        return CheckInResponse(
+          success: false,
+          errorMessage: data['message'] ?? data['error'] ?? 'Check-in afvist af serveren.',
+        );
+      }
+    } catch (_) {
+      return const CheckInResponse(
+        success: false,
+        errorMessage: 'Forbindelsesfejl under check-in. Prøv igen om et øjeblik.',
+      );
+    }
   }
 
-  Future<Map<String, dynamic>?> createBooking(BookingModel booking) async {
+  // ==========================================
+  // Nets Betalingsmotor Integration Flow
+  // ==========================================
+
+  /// Start checkout session: Core registers draft as PENDING and creates Nets session
+  Future<CheckoutSession?> startCheckout(
+    Map<String, dynamic> bookingDraft, {
+    String? checkoutUrl,
+  }) async {
     try {
       final payload = {
-        'termsAccepted': true,
-        'routeId': booking.routeId,
-        'departureId': booking.departureId,
-        'outboundDate': booking.departureDate,
-        'ticketClass': booking.ticketClass,
-        'passengers': booking.passengers.map((p) => {
-          'id': p.id,
-          'firstName': p.firstName,
-          'lastName': p.lastName,
-          'type': p.type.name.toUpperCase(),
-          'nationality': p.nationality,
-          'dateOfBirth': '1988-01-01',
-        }).toList(),
-        'leadContact': {
-          'fullName': booking.leadContactName,
-          'email': booking.leadContactEmail,
-          'phone': booking.leadContactPhone,
-        },
-        'selectedCabinIds': booking.selectedCabinIds,
-        'addOns': booking.addOns,
-        'paymentStatus': 'PAID',
+        'booking': bookingDraft,
+        'checkoutUrl': checkoutUrl ?? 'https://tidebook.gonordic.dk/checkout',
       };
 
       final res = await http.post(
-        Uri.parse('$baseUrl/bookings'),
-        headers: {'Content-Type': 'application/json'},
+        Uri.parse('$baseUrl/integrations/payments/checkout'),
+        headers: {
+          'Content-Type': 'application/json',
+          'x-tidebook-client': 'tidebook-app',
+        },
         body: jsonEncode(payload),
-      ).timeout(const Duration(seconds: 5));
+      ).timeout(const Duration(seconds: 8));
 
       if (res.statusCode == 200 || res.statusCode == 201) {
-        return jsonDecode(res.body) as Map<String, dynamic>;
+        final data = jsonDecode(res.body) as Map<String, dynamic>;
+        return CheckoutSession.fromJson(data);
       }
     } catch (_) {}
     return null;
+  }
+
+  /// Simulate customer authorization in Nets Simulator (development / test)
+  Future<bool> simulatePayment(String paymentId, {String outcome = 'approve'}) async {
+    try {
+      final res = await http.post(
+        Uri.parse('$baseUrl/integrations/payments/$paymentId/simulate'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'outcome': outcome}),
+      ).timeout(const Duration(seconds: 6));
+
+      return res.statusCode == 200;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Complete payment with Nets verification: Core marks booking CONFIRMED / PAID and returns booking + token
+  Future<CompletedPaymentResult> completePayment(String paymentId) async {
+    try {
+      final res = await http.post(
+        Uri.parse('$baseUrl/integrations/payments/$paymentId/complete'),
+        headers: {
+          'Content-Type': 'application/json',
+          'x-tidebook-client': 'tidebook-app',
+        },
+      ).timeout(const Duration(seconds: 8));
+
+      final data = jsonDecode(res.body);
+      if (res.statusCode == 200 && (data['status'] == 'COMPLETED' || data['booking'] != null)) {
+        final token = data['bookingToken']?.toString();
+        final bookingJson = data['booking'] as Map<String, dynamic>;
+        final booking = BookingModel.fromJson(bookingJson, bookingToken: token);
+        return CompletedPaymentResult(
+          success: true,
+          pnr: data['pnr'] ?? booking.pnr,
+          booking: booking,
+          bookingToken: token,
+        );
+      } else {
+        return CompletedPaymentResult(
+          success: false,
+          errorMessage: data['message'] ?? data['error'] ?? 'Betalingen kunne ikke afsluttes.',
+        );
+      }
+    } catch (_) {
+      return const CompletedPaymentResult(
+        success: false,
+        errorMessage: 'Forbindelsesfejl ved betalingsafslutning. Prøv igen.',
+      );
+    }
+  }
+
+  /// Abandon / cancel payment: Releases reserved capacity back to Core / TideRMS
+  Future<bool> abandonPayment(String paymentId) async {
+    try {
+      final res = await http.post(
+        Uri.parse('$baseUrl/integrations/payments/$paymentId/abandon'),
+        headers: {'Content-Type': 'application/json'},
+      ).timeout(const Duration(seconds: 5));
+
+      return res.statusCode == 200;
+    } catch (_) {
+      return false;
+    }
   }
 }

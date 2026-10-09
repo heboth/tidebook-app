@@ -1,5 +1,35 @@
 import 'passenger_model.dart';
 
+class BoardingPassModel {
+  final String passengerId;
+  final String passengerName;
+  final String qrPayload;
+  final String? seatOrCabin;
+
+  const BoardingPassModel({
+    required this.passengerId,
+    required this.passengerName,
+    required this.qrPayload,
+    this.seatOrCabin,
+  });
+
+  factory BoardingPassModel.fromJson(Map<String, dynamic> json) {
+    return BoardingPassModel(
+      passengerId: json['passengerId']?.toString() ?? '',
+      passengerName: json['passengerName']?.toString() ?? '',
+      qrPayload: json['qrPayload']?.toString() ?? '',
+      seatOrCabin: json['seatOrCabin']?.toString(),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'passengerId': passengerId,
+    'passengerName': passengerName,
+    'qrPayload': qrPayload,
+    if (seatOrCabin != null) 'seatOrCabin': seatOrCabin,
+  };
+}
+
 class BookingModel {
   final String pnr;
   final String bookingCode;
@@ -26,6 +56,8 @@ class BookingModel {
   final String gateNumber;
   final bool isDirectCustomer;
   final DateTime createdAt;
+  final List<BoardingPassModel> boardingPasses;
+  final String? bookingToken;
 
   BookingModel({
     required this.pnr,
@@ -53,13 +85,16 @@ class BookingModel {
     this.gateNumber = 'Gate 1 (Terminal Dampfærgevej)',
     this.isDirectCustomer = true,
     DateTime? createdAt,
+    this.boardingPasses = const [],
+    this.bookingToken,
   }) : createdAt = createdAt ?? DateTime.now();
 
-  bool get isCheckedIn => status == 'CHECKED_IN';
+  bool get isCheckedIn => status == 'CHECKED_IN' || boardingPasses.isNotEmpty;
   bool get isCancelled => status == 'CANCELLED';
 
-  String get qrPayload =>
-      'TB:$pnr:${passengers.isNotEmpty ? passengers.first.id : "PAX"}:$departureDate';
+  /// Official scannable QR payload issued by Core check-in response
+  String? get qrPayload =>
+      boardingPasses.isNotEmpty ? boardingPasses.first.qrPayload : null;
 
   BookingModel copyWith({
     String? status,
@@ -67,6 +102,9 @@ class BookingModel {
     VehicleModel? vehicle,
     List<String>? cabinNumbers,
     List<Map<String, dynamic>>? addOns,
+    String? paymentStatus,
+    List<BoardingPassModel>? boardingPasses,
+    String? bookingToken,
   }) {
     return BookingModel(
       pnr: pnr,
@@ -90,14 +128,16 @@ class BookingModel {
       leadContactEmail: leadContactEmail,
       leadContactPhone: leadContactPhone,
       totalAmountDkk: totalAmountDkk,
-      paymentStatus: paymentStatus,
+      paymentStatus: paymentStatus ?? this.paymentStatus,
       gateNumber: gateNumber,
       isDirectCustomer: isDirectCustomer,
       createdAt: createdAt,
+      boardingPasses: boardingPasses ?? this.boardingPasses,
+      bookingToken: bookingToken ?? this.bookingToken,
     );
   }
 
-  factory BookingModel.fromJson(Map<String, dynamic> json) {
+  factory BookingModel.fromJson(Map<String, dynamic> json, {String? bookingToken}) {
     final lead = json['leadContact'] is Map ? json['leadContact'] : {};
     final fare = json['fareBreakdown'] is Map ? json['fareBreakdown'] : {};
     final paxList = (json['passengers'] as List?)
@@ -113,6 +153,33 @@ class BookingModel {
             ?.map((e) => e.toString())
             .toList() ??
         [];
+
+    final rawBoardingPasses = <BoardingPassModel>[];
+    if (json['boardingPasses'] is List) {
+      for (final bp in json['boardingPasses']) {
+        if (bp is Map) {
+          rawBoardingPasses.add(BoardingPassModel.fromJson(Map<String, dynamic>.from(bp)));
+        }
+      }
+    } else if (json['passengerBoardingPasses'] is List) {
+      for (final bp in json['passengerBoardingPasses']) {
+        if (bp is Map) {
+          rawBoardingPasses.add(BoardingPassModel.fromJson(Map<String, dynamic>.from(bp)));
+        }
+      }
+    } else if (json['checkedInLegs'] is List) {
+      for (final leg in json['checkedInLegs']) {
+        if (leg is Map && leg['passengerBoardingPasses'] is List) {
+          for (final bp in leg['passengerBoardingPasses']) {
+            if (bp is Map) {
+              rawBoardingPasses.add(BoardingPassModel.fromJson(Map<String, dynamic>.from(bp)));
+            }
+          }
+        }
+      }
+    }
+
+    final effectiveToken = bookingToken ?? json['bookingToken']?.toString();
 
     return BookingModel(
       pnr: json['pnr'] ?? '',
@@ -143,11 +210,15 @@ class BookingModel {
       leadContactName: lead['fullName'] ?? 'Mads Jensen',
       leadContactEmail: lead['email'] ?? 'mads.jensen@example.dk',
       leadContactPhone: lead['phone'] ?? '+45 20 30 40 50',
-      totalAmountDkk: (fare['totalAmountDkk'] as num?)?.toDouble() ?? 4253.0,
+      totalAmountDkk: (fare['totalAmountDkk'] as num?)?.toDouble() ??
+          (json['totalAmountDkk'] as num?)?.toDouble() ??
+          4253.0,
       paymentStatus: json['paymentStatus'] ?? 'PAID',
       gateNumber: json['gateNumber'] ?? 'Gate 1 (Terminal Dampfærgevej)',
       isDirectCustomer: json['agentId'] == null && json['bookedByAgent'] == null,
       createdAt: DateTime.tryParse(json['createdAt'] ?? '') ?? DateTime.now(),
+      boardingPasses: rawBoardingPasses,
+      bookingToken: effectiveToken,
     );
   }
 }

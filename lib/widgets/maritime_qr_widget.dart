@@ -4,37 +4,46 @@ import '../services/qr_security_service.dart';
 import '../theme/gonordic_theme.dart';
 
 class MaritimeQrWidget extends StatelessWidget {
-  final String pnr;
-  final String departureDate;
-  final String? passengerId;
-  final String? cabin;
+  final String qrPayload;
   final double size;
   final bool showSecurityHash;
 
   const MaritimeQrWidget({
     super.key,
-    required this.pnr,
-    required this.departureDate,
-    this.passengerId,
-    this.cabin,
+    required this.qrPayload,
     this.size = 180,
     this.showSecurityHash = true,
   });
 
   @override
   Widget build(BuildContext context) {
-    final payload = QrSecurityService.buildPayload(
-      pnr: pnr,
-      date: departureDate,
-      passengerId: passengerId,
-      cabin: cabin,
-    );
-    final secCode = QrSecurityService.generateSecurityCode(
-      pnr: pnr,
-      date: departureDate,
-      passengerId: passengerId,
-      cabin: cabin,
-    );
+    if (qrPayload.isEmpty) {
+      return Container(
+        width: size,
+        height: size,
+        alignment: Alignment.center,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: GoNordicTheme.border, width: 2),
+        ),
+        child: const Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.qr_code_2, size: 48, color: GoNordicTheme.textSecondary),
+            SizedBox(height: 8),
+            Text(
+              'Check-in påkrævet',
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: GoNordicTheme.pine),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      );
+    }
+
+    final secCode = QrSecurityService.extractSecurityCode(qrPayload);
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -54,7 +63,7 @@ class MaritimeQrWidget extends StatelessWidget {
             border: Border.all(color: GoNordicTheme.border, width: 2),
           ),
           child: QrImageView(
-            data: payload,
+            data: qrPayload,
             version: QrVersions.auto,
             size: size,
             errorCorrectionLevel: QrErrorCorrectLevel.M,
@@ -68,7 +77,7 @@ class MaritimeQrWidget extends StatelessWidget {
             ),
           ),
         ),
-        if (showSecurityHash) ...[
+        if (showSecurityHash && secCode != null) ...[
           const SizedBox(height: 8),
           Row(
             mainAxisSize: MainAxisSize.min,
@@ -92,3 +101,4 @@ class MaritimeQrWidget extends StatelessWidget {
     );
   }
 }
+
