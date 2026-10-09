@@ -92,7 +92,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const CircleAvatar(radius: 30, backgroundColor: GoNordicTheme.pine, child: Icon(Icons.person, color: Colors.white, size: 32)),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: Image.asset('assets/gonordic/app_icon.png', width: 64, height: 64, fit: BoxFit.cover),
+                  ),
                   const SizedBox(height: 12),
                   const Text('Log ind på din profil', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 6),
@@ -146,8 +149,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('GO NORDIC CLUB', style: TextStyle(color: GoNordicTheme.lime, fontWeight: FontWeight.w900, fontSize: 12)),
-                    Text(user.clubTier.toUpperCase(), style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                    Image.asset('assets/gonordic/logo_white.png', height: 16, fit: BoxFit.contain, errorBuilder: (c, e, s) => const Text('GO NORDIC CLUB', style: TextStyle(color: GoNordicTheme.lime, fontWeight: FontWeight.w900, fontSize: 12))),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(10)),
+                      child: Text(user.clubTier.toUpperCase(), style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold)),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 12),

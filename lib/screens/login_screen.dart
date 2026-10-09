@@ -98,9 +98,29 @@ class _LoginScreenState extends State<LoginScreen> {
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    const Text('Log ind på din konto', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
+                      child: Image.asset(
+                        'assets/gonordic/app_icon.png',
+                        width: 72,
+                        height: 72,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Image.asset(
+                      'assets/gonordic/logo.png',
+                      height: 24,
+                      fit: BoxFit.contain,
+                      errorBuilder: (ctx, err, stack) => const Text('Go Nordic Cruiseline', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+                    ),
+                    const SizedBox(height: 16),
+                    const Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text('Log ind på din konto', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                    ),
                     const SizedBox(height: 12),
                     TextField(controller: _userController, decoration: const InputDecoration(labelText: 'BRUGERNAVN ELLER E-MAIL')),
                     const SizedBox(height: 10),

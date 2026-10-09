@@ -27,7 +27,12 @@ class _ExploreScreenState extends State<ExploreScreen> {
     return Scaffold(
       backgroundColor: GoNordicTheme.sand,
       appBar: AppBar(
-        title: const Text('Go Nordic Cruiseline'),
+        title: Image.asset(
+          'assets/gonordic/logo_white.png',
+          height: 24,
+          fit: BoxFit.contain,
+          errorBuilder: (ctx, err, stack) => const Text('Go Nordic Cruiseline'),
+        ),
         actions: [
           IconButton(
             icon: Icon(user != null ? Icons.account_circle : Icons.person_outline),

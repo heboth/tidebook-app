@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import '../theme/gonordic_theme.dart';
 
 class GoNordicAppBar extends StatelessWidget implements PreferredSizeWidget {
@@ -26,19 +25,17 @@ class GoNordicAppBar extends StatelessWidget implements PreferredSizeWidget {
       title: Row(
         children: [
           // Logo or Brand typography
-          SizedBox(
+          Image.asset(
+            'assets/gonordic/logo_white.png',
             height: 24,
-            child: SvgPicture.asset(
-              'assets/gonordic/logo-wide.svg',
-              colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
-              placeholderBuilder: (ctx) => const Text(
-                'GO NORDIC',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w900,
-                  fontSize: 16,
-                  letterSpacing: -0.5,
-                ),
+            fit: BoxFit.contain,
+            errorBuilder: (ctx, err, stack) => const Text(
+              'GO NORDIC CRUISELINE',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w900,
+                fontSize: 16,
+                letterSpacing: -0.5,
               ),
             ),
           ),

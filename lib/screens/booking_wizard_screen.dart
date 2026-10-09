@@ -255,8 +255,13 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.check_circle, color: GoNordicTheme.success, size: 56),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: Image.asset('assets/gonordic/app_icon.png', width: 64, height: 64, fit: BoxFit.cover),
+          ),
           const SizedBox(height: 10),
+          const Icon(Icons.check_circle, color: GoNordicTheme.success, size: 48),
+          const SizedBox(height: 8),
           const Text('Booking Gennemført!', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           Text('${_booked?.pnr}', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: GoNordicTheme.pine)),
           const SizedBox(height: 16),

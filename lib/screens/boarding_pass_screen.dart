@@ -32,21 +32,33 @@ class BoardingPassScreen extends StatelessWidget {
                   color: GoNordicTheme.pineDark,
                   borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
                 ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: Text(
-                        booking.routeName,
-                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
+                    Image.asset(
+                      'assets/gonordic/logo_white.png',
+                      height: 18,
+                      fit: BoxFit.contain,
+                      errorBuilder: (ctx, err, stack) => const SizedBox(),
                     ),
-                    const SizedBox(width: 8),
-                    Text(
-                      booking.isCheckedIn ? 'TJEKKET IND' : 'KLAR',
-                      style: const TextStyle(color: GoNordicTheme.lime, fontWeight: FontWeight.w900, fontSize: 11),
+                    const SizedBox(height: 10),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            booking.routeName,
+                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          booking.isCheckedIn ? 'TJEKKET IND' : 'KLAR',
+                          style: const TextStyle(color: GoNordicTheme.lime, fontWeight: FontWeight.w900, fontSize: 11),
+                        ),
+                      ],
                     ),
                   ],
                 ),
