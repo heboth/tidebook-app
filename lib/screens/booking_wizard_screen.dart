@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'nets_payment_screen.dart';
 import '../models/cabin_model.dart';
 import '../models/addon_model.dart';
 import '../models/booking_model.dart';
@@ -437,24 +438,30 @@ class _NetsPaymentSheetState extends State<_NetsPaymentSheet> {
   bool _isCompleting = false;
   String? _errorMessage;
 
-  void _approveAndComplete() async {
-    setState(() {
-      _isCompleting = true;
-      _errorMessage = null;
-    });
+  /// Åbner Nets' betalingsside; når kunden er sendt tilbage, bekræfter Core betalingen (/complete).
+  Future<void> _payAndComplete() async {
+    final page = widget.session.paymentPageUrl;
+    final returnUrl = widget.session.returnUrl;
+    final cancelUrl = widget.session.cancelUrl;
+    if (page == null || returnUrl == null || cancelUrl == null) {
+      setState(() => _errorMessage = 'Betalingssiden kunne ikke åbnes. Prøv igen.');
+      return;
+    }
+    setState(() => _errorMessage = null);
+    final paid = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (_) => NetsPaymentScreen(paymentPageUrl: page, returnUrl: returnUrl, cancelUrl: cancelUrl, pnr: widget.session.pnr),
+      ),
+    );
+    if (!mounted) return;
+    if (paid != true) {
+      setState(() => _errorMessage = 'Betalingen blev ikke gennemført. Du kan prøve igen eller annullere.');
+      return;
+    }
 
+    setState(() => _isCompleting = true);
     try {
-      if (widget.session.provider == 'simulator') {
-        final simOk = await ApiService().simulatePayment(widget.session.paymentId);
-        if (!simOk) {
-          setState(() {
-            _isCompleting = false;
-            _errorMessage = 'Nets simulation afvist.';
-          });
-          return;
-        }
-      }
-
       final res = await ApiService().completePayment(widget.session.paymentId);
       if (!mounted) return;
       if (res.success && res.booking != null) {
@@ -462,14 +469,14 @@ class _NetsPaymentSheetState extends State<_NetsPaymentSheet> {
       } else {
         setState(() {
           _isCompleting = false;
-          _errorMessage = res.errorMessage ?? 'Betalingen kunne ikke bekræftes af Core.';
+          _errorMessage = res.errorMessage ?? 'Betalingen kunne ikke bekræftes. Kontakt kundeservice med booking ${widget.session.pnr}.';
         });
       }
     } catch (_) {
       if (!mounted) return;
       setState(() {
         _isCompleting = false;
-        _errorMessage = 'Netværksfejl under betalingsbekræftelse.';
+        _errorMessage = 'Netværksfejl under bekræftelsen. Kontakt kundeservice med booking ${widget.session.pnr}.';
       });
     }
   }
@@ -547,8 +554,8 @@ class _NetsPaymentSheetState extends State<_NetsPaymentSheet> {
                 Expanded(
                   child: Text(
                     widget.session.provider == 'simulator'
-                        ? 'Nets Simulator Testmiljø: Betalingen verificeres kryptografisk mod Core.'
-                        : 'Nets Easy Betaling: Betalingen verificeres og bekræftes af Core.',
+                        ? 'Testmiljø: Nets-simulatoren bruges – ingen rigtige penge.'
+                        : 'Du betaler sikkert hos Nets. Pengene trækkes først, når bookingen er bekræftet.',
                     style: const TextStyle(fontSize: 11, color: Color(0xFF92400E), fontWeight: FontWeight.w600),
                   ),
                 ),
@@ -565,7 +572,7 @@ class _NetsPaymentSheetState extends State<_NetsPaymentSheet> {
           ],
           const SizedBox(height: 20),
           ElevatedButton(
-            onPressed: _isCompleting ? null : _approveAndComplete,
+            onPressed: _isCompleting ? null : _payAndComplete,
             child: _isCompleting
                 ? const Row(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -575,7 +582,7 @@ class _NetsPaymentSheetState extends State<_NetsPaymentSheet> {
                       Text('Verificerer hos Nets & Core...'),
                     ],
                   )
-                : const Text('Godkend betaling (Testkort / Nets)'),
+                : const Text('Betal med kort eller MobilePay'),
           ),
           const SizedBox(height: 8),
           OutlinedButton(

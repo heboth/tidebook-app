@@ -194,26 +194,26 @@ class BookingModel {
           DateTime.now().toIso8601String().split('T')[0],
       departureTime: json['departureTime'] ?? '16:30',
       arrivalTime: json['arrivalTime'] ?? '10:00 (+1)',
-      vesselName: json['vesselName'] ?? 'Crown Seaways',
-      status: json['status'] ?? 'CONFIRMED',
-      ticketClass: json['ticketClass'] ?? 'PREMIUM',
+      vesselName: json['vesselName'] ?? '',
+      // Mangler et felt, opfindes der ikke data: en booking uden status/betaling er ikke bekræftet eller betalt
+      status: json['status'] ?? 'PENDING',
+      ticketClass: json['ticketClass'] ?? 'STANDARD',
       passengers: paxList,
       vehicle: veh,
       selectedCabinIds: cabinIds,
-      cabinTitle: json['cabinTitle'] ??
-          (cabinIds.isNotEmpty ? 'Commodore Balcony' : 'Standard Kahyt'),
-      cabinNumbers: cabinIds.isNotEmpty ? cabinIds : ['CAB-CROW-1101'],
+      cabinTitle: json['cabinTitle'] ?? (cabinIds.isNotEmpty ? 'Kahyt' : 'Ingen kahyt'),
+      cabinNumbers: cabinIds,
       addOns: (json['addOns'] as List?)
               ?.map((e) => Map<String, dynamic>.from(e as Map))
               .toList() ??
           [],
-      leadContactName: lead['fullName'] ?? 'Mads Jensen',
-      leadContactEmail: lead['email'] ?? 'mads.jensen@example.dk',
-      leadContactPhone: lead['phone'] ?? '+45 20 30 40 50',
+      leadContactName: lead['fullName'] ?? '',
+      leadContactEmail: lead['email'] ?? '',
+      leadContactPhone: lead['phone'] ?? '',
       totalAmountDkk: (fare['totalAmountDkk'] as num?)?.toDouble() ??
           (json['totalAmountDkk'] as num?)?.toDouble() ??
-          4253.0,
-      paymentStatus: json['paymentStatus'] ?? 'PAID',
+          0.0,
+      paymentStatus: json['paymentStatus'] ?? 'PENDING',
       gateNumber: json['gateNumber'] ?? 'Gate 1 (Terminal Dampfærgevej)',
       isDirectCustomer: json['agentId'] == null && json['bookedByAgent'] == null,
       createdAt: DateTime.tryParse(json['createdAt'] ?? '') ?? DateTime.now(),

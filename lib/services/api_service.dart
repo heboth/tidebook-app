@@ -42,6 +42,10 @@ class CheckoutSession {
   final String? checkoutKey;
   final String? scriptUrl;
   final String? bookingToken;
+  /// Nets' betalingsside (eller Core's simulator-side i test) og adresserne Nets sender kunden tilbage til
+  final String? paymentPageUrl;
+  final String? returnUrl;
+  final String? cancelUrl;
 
   const CheckoutSession({
     required this.pnr,
@@ -52,6 +56,9 @@ class CheckoutSession {
     this.checkoutKey,
     this.scriptUrl,
     this.bookingToken,
+    this.paymentPageUrl,
+    this.returnUrl,
+    this.cancelUrl,
   });
 
   factory CheckoutSession.fromJson(Map<String, dynamic> json) {
@@ -65,6 +72,9 @@ class CheckoutSession {
       checkoutKey: checkout['checkoutKey']?.toString(),
       scriptUrl: checkout['scriptUrl']?.toString(),
       bookingToken: json['bookingToken']?.toString(),
+      paymentPageUrl: checkout['hostedPaymentPageUrl']?.toString(),
+      returnUrl: checkout['returnUrl']?.toString(),
+      cancelUrl: checkout['cancelUrl']?.toString(),
     );
   }
 }
@@ -309,9 +319,10 @@ class ApiService {
     String? checkoutUrl,
   }) async {
     try {
+      // Appen bruger Nets' betalingsside (hosted) – Core giver adressen og retur-/afbrudt-adresserne
       final payload = {
         'booking': bookingDraft,
-        'checkoutUrl': checkoutUrl ?? 'https://tidebook.gonordic.dk/checkout',
+        'mode': 'hosted',
       };
 
       final res = await http.post(
@@ -329,21 +340,6 @@ class ApiService {
       }
     } catch (_) {}
     return null;
-  }
-
-  /// Simulate customer authorization in Nets Simulator (development / test)
-  Future<bool> simulatePayment(String paymentId, {String outcome = 'approve'}) async {
-    try {
-      final res = await http.post(
-        Uri.parse('$baseUrl/integrations/payments/$paymentId/simulate'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'outcome': outcome}),
-      ).timeout(const Duration(seconds: 6));
-
-      return res.statusCode == 200;
-    } catch (_) {
-      return false;
-    }
   }
 
   /// Complete payment with Nets verification: Core marks booking CONFIRMED / PAID and returns booking + token

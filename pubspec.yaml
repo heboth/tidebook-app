@@ -39,6 +39,7 @@ dependencies:
   intl: ^0.20.3
   http: ^1.6.0
   crypto: ^3.0.7
+  webview_flutter: ^4.10.0
 
 dev_dependencies:
   flutter_test:
