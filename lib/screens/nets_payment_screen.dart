@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 import '../theme/gonordic_theme.dart';
+import '../services/texts_service.dart';
 
 /// Nets' betalingsside (Hosted Payment Page) i en WebView.
 ///
@@ -73,10 +74,10 @@ class _NetsPaymentScreenState extends State<NetsPaymentScreen> {
       child: Scaffold(
         backgroundColor: GoNordicTheme.sand,
         appBar: AppBar(
-          title: Text('Betaling · ${widget.pnr}'),
+          title: Text(tr('netsPayment.title', {'pnr': widget.pnr})),
           leading: IconButton(
             icon: const Icon(Icons.close),
-            tooltip: 'Afbryd betaling',
+            tooltip: tr('netsPayment.cancelTooltip'),
             onPressed: () => _finish(false),
           ),
           bottom: _loading

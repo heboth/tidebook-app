@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/gonordic_theme.dart';
+import '../services/texts_service.dart';
 import '../widgets/gonordic_banner.dart';
 import 'booking_wizard_screen.dart';
 
@@ -10,12 +11,12 @@ class DestinationGuideScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: GoNordicTheme.sand,
-      appBar: AppBar(title: const Text('Oplev Ombord & Destinationer')),
+      appBar: AppBar(title: Text(tr('destinationGuide.title'))),
       body: ListView(
         children: [
-          const GoNordicBanner(
+          GoNordicBanner(
             badgeText: 'MINICRUISE',
-            text: '2 nætter til søs og 5 timer til at udforske smukke Oslo',
+            text: tr('destinationGuide.bannerText'),
           ),
           Padding(
             padding: const EdgeInsets.all(16),
@@ -23,23 +24,23 @@ class DestinationGuideScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _card(
-                  'Oslo Operahus & Fjordbyen',
-                  'Gå en tur på det ikoniske marmortag på Oslo Operaen og nyd udsigten over fjorden, Munch Museet og Barcode.',
+                  tr('destinationGuide.osloTitle'),
+                  tr('destinationGuide.osloText'),
                   'assets/gonordic/images/oslo-opera.jpg',
                 ),
                 _card(
-                  'Gastronomi & Skandinaviske Buffeter',
-                  'Vores dygtige kokke tryller med frisk fisk, saftigt kød, nordiske oste og lækre desserter i 7 Seas og Explorers Steakhouse.',
+                  tr('destinationGuide.foodTitle'),
+                  tr('destinationGuide.foodText'),
                   'assets/gonordic/images/chef-kitchen.jpg',
                 ),
                 _card(
-                  'Tax-Free Sea Shop Ombord',
-                  'Shop parfume, kosmetik, skandinavisk slik, spiritus og mærkevarer med op til 20-40% rabat i forhold til landpriser.',
+                  tr('destinationGuide.shopTitle'),
+                  tr('destinationGuide.shopText'),
                   'assets/gonordic/images/taxfree-shop.jpg',
                 ),
                 _card(
-                  'Skiferie i de Norske Fjelde',
-                  'Tag bilen med til Norefjell, Hemsedal, Hafjell eller Trysil. Nem og udhvilet ankomst i Oslo kl. 10:00.',
+                  tr('destinationGuide.skiTitle'),
+                  tr('destinationGuide.skiText'),
                   'assets/gonordic/images/ski-lift.jpg',
                 ),
                 const SizedBox(height: 12),
@@ -55,7 +56,7 @@ class DestinationGuideScreen extends StatelessWidget {
                       );
                     },
                     icon: const Icon(Icons.sailing),
-                    label: const Text('Book MiniCruise Nu →'),
+                    label: Text(tr('destinationGuide.bookNow')),
                   ),
                 ),
                 const SizedBox(height: 24),

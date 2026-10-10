@@ -1,11 +1,22 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tidebook_app/main.dart';
 import 'package:tidebook_app/services/auth_service.dart';
 import 'package:tidebook_app/services/booking_service.dart';
 import 'package:tidebook_app/services/api_service.dart';
 import 'package:tidebook_app/services/qr_security_service.dart';
+import 'package:tidebook_app/services/texts_service.dart';
 
 void main() {
+  setUpAll(() {
+    // Testene kører uden TideCMS – den indbyggede danske pakke indlæses direkte
+    TestWidgetsFlutterBinding.ensureInitialized();
+    final json = jsonDecode(File('assets/i18n/da.json').readAsStringSync()) as Map<String, dynamic>;
+    TextsService.instance.load(json);
+  });
+
   testWidgets('Tidebook passenger app loads with bottom navigation', (WidgetTester tester) async {
     await tester.pumpWidget(const TidebookApp());
     await tester.pumpAndSettle();

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/gonordic_theme.dart';
+import '../services/texts_service.dart';
 
 class GoNordicAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
@@ -47,9 +48,9 @@ class GoNordicAppBar extends StatelessWidget implements PreferredSizeWidget {
                 color: GoNordicTheme.lime,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Text(
-                'PASSAGER',
-                style: TextStyle(
+              child: Text(
+                tr('widgets.appBar.badge'),
+                style: const TextStyle(
                   color: GoNordicTheme.pineDark,
                   fontSize: 9,
                   fontWeight: FontWeight.w900,

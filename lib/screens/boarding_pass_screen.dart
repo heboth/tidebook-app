@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/booking_model.dart';
 import '../services/booking_service.dart';
+import '../services/texts_service.dart';
 import '../theme/gonordic_theme.dart';
 import '../widgets/maritime_qr_widget.dart';
 
@@ -34,16 +35,16 @@ class _BoardingPassScreenState extends State<BoardingPassScreen> {
         _booking = result.booking!;
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           backgroundColor: GoNordicTheme.success,
-          content: Text('✓ Check-in gennemført! Officielt boardingkort modtaget.'),
+          content: Text(tr('boardingPass.checkInDone')),
         ),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           backgroundColor: GoNordicTheme.error,
-          content: Text(result.errorMessage ?? 'Check-in kunne ikke gennemføres.'),
+          content: Text(result.errorMessage ?? tr('boardingPass.checkInFailed')),
         ),
       );
     }
@@ -64,7 +65,7 @@ class _BoardingPassScreenState extends State<BoardingPassScreen> {
 
     return Scaffold(
       backgroundColor: GoNordicTheme.sand,
-      appBar: AppBar(title: const Text('Boardingkort')),
+      appBar: AppBar(title: Text(tr('boardingPass.title'))),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -129,7 +130,7 @@ class _BoardingPassScreenState extends State<BoardingPassScreen> {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          _booking.isCheckedIn ? 'TJEKKET IND' : 'KLAR',
+                          _booking.isCheckedIn ? tr('boardingPass.statusCheckedIn') : tr('boardingPass.statusReady'),
                           style: const TextStyle(color: GoNordicTheme.lime, fontWeight: FontWeight.w900, fontSize: 11),
                         ),
                       ],
@@ -144,15 +145,15 @@ class _BoardingPassScreenState extends State<BoardingPassScreen> {
                     children: [
                       const Icon(Icons.info_outline, size: 48, color: GoNordicTheme.teal),
                       const SizedBox(height: 12),
-                      const Text(
-                        'Officielt boardingkort udstedes ved check-in',
-                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: GoNordicTheme.pine),
+                      Text(
+                        tr('boardingPass.issuedAtCheckIn'),
+                        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: GoNordicTheme.pine),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 8),
-                      const Text(
-                        'Gennemfør mobil check-in for at modtage dit krypografisk signerede boardingkort fra TideBook Core.',
-                        style: TextStyle(fontSize: 12, color: GoNordicTheme.textSecondary),
+                      Text(
+                        tr('boardingPass.issuedAtCheckInBody'),
+                        style: const TextStyle(fontSize: 12, color: GoNordicTheme.textSecondary),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 16),
@@ -161,7 +162,7 @@ class _BoardingPassScreenState extends State<BoardingPassScreen> {
                         icon: _isCheckingIn
                             ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                             : const Icon(Icons.how_to_reg),
-                        label: Text(_isCheckingIn ? 'Tjekker ind hos Core...' : 'Tjek ind nu'),
+                        label: Text(_isCheckingIn ? tr('boardingPass.checkingIn') : tr('boardingPass.checkInNow')),
                       ),
                     ],
                   ),
@@ -185,11 +186,11 @@ class _BoardingPassScreenState extends State<BoardingPassScreen> {
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   children: [
-                    _row('Passager', leadPax, 'Afgang', '${_booking.departureDate} ${_booking.departureTime}'),
+                    _row(tr('boardingPass.passenger'), leadPax, tr('boardingPass.departure'), '${_booking.departureDate} ${_booking.departureTime}'),
                     const SizedBox(height: 12),
-                    _row('Færge', _booking.vesselName, 'Kahyt', currentPass?.seatOrCabin ?? _booking.cabinTitle),
+                    _row(tr('boardingPass.ship'), _booking.vesselName, tr('boardingPass.cabin'), currentPass?.seatOrCabin ?? _booking.cabinTitle),
                     const SizedBox(height: 12),
-                    _row('Gate', _booking.gateNumber, 'Køretøj', _booking.vehicle?.licensePlate ?? 'Gående'),
+                    _row(tr('boardingPass.gate'), _booking.gateNumber, tr('boardingPass.vehicle'), _booking.vehicle?.licensePlate ?? tr('boardingPass.onFoot')),
                   ],
                 ),
               ),

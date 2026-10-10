@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/booking_model.dart';
+import '../services/texts_service.dart';
 import '../theme/gonordic_theme.dart';
 
 class BookingCard extends StatelessWidget {
@@ -63,7 +64,7 @@ class BookingCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
-                      isCheckedIn ? '✓ TJEKKET IND' : 'BEKRÆFTET',
+                      isCheckedIn ? tr('widgets.bookingCard.checkedIn') : tr('widgets.bookingCard.confirmed'),
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w900,
@@ -89,7 +90,7 @@ class BookingCard extends StatelessWidget {
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
-                      '${booking.departureDate} kl. ${booking.departureTime}',
+                      tr('widgets.bookingCard.departure', {'date': booking.departureDate, 'time': booking.departureTime}),
                       style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: GoNordicTheme.teal),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -109,7 +110,7 @@ class BookingCard extends StatelessWidget {
                     child: ElevatedButton.icon(
                       onPressed: onShowBoardingPass,
                       icon: const Icon(Icons.qr_code, size: 18),
-                      label: const Text('Vis Boardingkort'),
+                      label: Text(tr('widgets.bookingCard.showBoardingPass')),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: GoNordicTheme.pine,
                         foregroundColor: Colors.white,
@@ -128,7 +129,7 @@ class BookingCard extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
-                      child: const Text('Tjek Ind'),
+                      child: Text(tr('widgets.bookingCard.checkIn')),
                     ),
                   ],
                 ],

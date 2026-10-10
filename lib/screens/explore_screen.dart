@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
+import '../services/texts_service.dart';
 import '../theme/gonordic_theme.dart';
 import '../widgets/gonordic_banner.dart';
 import 'booking_wizard_screen.dart';
@@ -38,12 +39,12 @@ class _ExploreScreenState extends State<ExploreScreen> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Vælg Rejsende & Køretøj', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  Text(tr('explore.passengerModal.title'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 16),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text('Voksne', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
+                      Text(tr('explore.passengerModal.adults'), style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
                       Row(
                         children: [
                           IconButton(
@@ -68,7 +69,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text('Børn (0-15 år)', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
+                      Text(tr('explore.passengerModal.children'), style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
                       Row(
                         children: [
                           IconButton(
@@ -93,8 +94,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
                   const Divider(height: 20),
                   SwitchListTile(
                     contentPadding: EdgeInsets.zero,
-                    title: const Text('Medbring bil / køretøj', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
-                    subtitle: const Text('Personbil under 1.85m højde', style: TextStyle(fontSize: 12)),
+                    title: Text(tr('explore.passengerModal.bringVehicle'), style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
+                    subtitle: Text(tr('explore.passengerModal.bringVehicleSub'), style: const TextStyle(fontSize: 12)),
                     value: _hasVehicle,
                     activeThumbColor: GoNordicTheme.pine,
                     onChanged: (val) {
@@ -107,7 +108,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                     width: double.infinity,
                     child: ElevatedButton(
                       onPressed: () => Navigator.pop(ctx),
-                      child: const Text('Bekræft'),
+                      child: Text(tr('explore.passengerModal.confirm')),
                     ),
                   ),
                 ],
@@ -135,7 +136,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
         actions: [
           IconButton(
             icon: Icon(user != null ? Icons.account_circle : Icons.person_outline),
-            tooltip: 'Profil',
+            tooltip: tr('explore.profileTooltip'),
             onPressed: () {
               if (user != null) {
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileScreen())).then((_) => setState(() {}));
@@ -150,9 +151,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
         children: [
           InkWell(
             onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DestinationGuideScreen())),
-            child: const GoNordicBanner(
-              badgeText: 'MINICRUISE TILBUD',
-              text: 'Sejl København-Oslo tur/retur fra kun 890 DKK →',
+            child: GoNordicBanner(
+              badgeText: tr('explore.bannerBadge'),
+              text: tr('explore.bannerText'),
             ),
           ),
           _buildHero(),
@@ -202,11 +203,11 @@ class _ExploreScreenState extends State<ExploreScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(color: GoNordicTheme.lime, borderRadius: BorderRadius.circular(12)),
-                child: const Text('DAGLIGE AFGANGE KØBENHAVN ⇄ OSLO', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: GoNordicTheme.pineDark)),
+                child: Text(tr('explore.hero.badge'), style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: GoNordicTheme.pineDark)),
               ),
               const SizedBox(height: 6),
-              const Text('Oplev Norge fra søsiden', style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w900)),
-              const Text('2 nætter til søs • Gastronomi • Panoramadæk', style: TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.w600)),
+              Text(tr('explore.hero.title'), style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w900)),
+              Text(tr('explore.hero.subtitle'), style: const TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.w600)),
             ],
           ),
         ),
@@ -232,8 +233,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Hej, ${user.fullName} (${user.clubTier}) 👋', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: GoNordicTheme.pine)),
-                  Text('Stamdata, pas og elbil (${user.savedVehiclePlate}) er klar til brug.', style: const TextStyle(fontSize: 11, color: Color(0xFF1E6460))),
+                  Text(tr('explore.profileBar.greeting', {'name': user.fullName, 'tier': user.clubTier}), style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: GoNordicTheme.pine)),
+                  Text(tr('explore.profileBar.ready', {'plate': user.savedVehiclePlate}), style: const TextStyle(fontSize: 11, color: Color(0xFF1E6460))),
                 ],
               ),
             ),
@@ -254,22 +255,22 @@ class _ExploreScreenState extends State<ExploreScreen> {
         child: InkWell(
           borderRadius: BorderRadius.circular(14),
           onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const LoginScreen())).then((_) => setState(() {})),
-          child: const Padding(
-            padding: EdgeInsets.all(12),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
             child: Row(
               children: [
-                Icon(Icons.account_circle, color: GoNordicTheme.teal, size: 26),
-                SizedBox(width: 8),
+                const Icon(Icons.account_circle, color: GoNordicTheme.teal, size: 26),
+                const SizedBox(width: 8),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Log ind for at bruge dine gemte data', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12)),
-                      Text('Udfylder bilnummer og kontaktoplysninger automatisk.', style: TextStyle(fontSize: 10, color: GoNordicTheme.textSecondary)),
+                      Text(tr('explore.profileBar.loginTitle'), style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12)),
+                      Text(tr('explore.profileBar.loginSub'), style: const TextStyle(fontSize: 10, color: GoNordicTheme.textSecondary)),
                     ],
                   ),
                 ),
-                Text('Log ind →', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: GoNordicTheme.teal)),
+                Text(tr('explore.profileBar.loginLink'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: GoNordicTheme.teal)),
               ],
             ),
           ),
@@ -289,7 +290,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
               children: [
                 _tab('MiniCruise', 'CRUISE'),
                 const SizedBox(width: 8),
-                _tab('Færgeoverfart', 'ONEWAY'),
+                _tab(tr('explore.search.ferryTab'), 'ONEWAY'),
               ],
             ),
             const Divider(height: 20),
@@ -307,7 +308,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                     const Icon(Icons.directions_boat, color: GoNordicTheme.pine, size: 18),
                     const SizedBox(width: 8),
                     Expanded(
-                      child: Text(_routeId == 'ROUTE-CPH-OSL' ? 'København → Oslo' : 'Oslo → København', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                      child: Text(_routeId == 'ROUTE-CPH-OSL' ? tr('explore.search.routeCphOsl') : tr('explore.search.routeOslCph'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                     ),
                     const Icon(Icons.swap_horiz, color: GoNordicTheme.teal),
                   ],
@@ -359,7 +360,11 @@ class _ExploreScreenState extends State<ExploreScreen> {
                           const SizedBox(width: 6),
                           Expanded(
                             child: Text(
-                              '$_adults voksne${_children > 0 ? " • $_children børn" : ""}${_hasVehicle ? " • Bil" : ""}',
+                              [
+                                tr('explore.search.adults', {'count': _adults}),
+                                if (_children > 0) tr('explore.search.children', {'count': _children}),
+                                if (_hasVehicle) tr('explore.search.vehicle'),
+                              ].join(' • '),
                               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -391,7 +396,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                   );
                 },
                 icon: const Icon(Icons.search, size: 18),
-                label: const Text('Find Afgange & Book Kahyt →'),
+                label: Text(tr('explore.search.findDepartures')),
               ),
             ),
           ],
@@ -420,9 +425,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 18),
-          child: Text('LAVPRISKALENDER (14 DAGE)', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: GoNordicTheme.textSecondary)),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 18),
+          child: Text(tr('explore.priceCalendar'), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: GoNordicTheme.textSecondary)),
         ),
         const SizedBox(height: 6),
         SizedBox(
@@ -476,17 +481,17 @@ class _ExploreScreenState extends State<ExploreScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('OPLEVELSER OM BORD', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: GoNordicTheme.textSecondary)),
+              Text(tr('explore.highlights.title'), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: GoNordicTheme.textSecondary)),
               TextButton(
                 onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DestinationGuideScreen())),
-                child: const Text('Se alle guide →', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                child: Text(tr('explore.highlights.seeAll'), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
               ),
             ],
           ),
           const SizedBox(height: 4),
-          _item('Skandinavisk Gastronomi & Buffeter', '7 Seas buffet og frisk morgenmad.', 'assets/gonordic/images/chef-kitchen.jpg'),
-          _item('Panoramadæk & Saloner', 'Udsigt over Kattegat og Oslofjorden.', 'assets/gonordic/images/family-window.jpg'),
-          _item('Tax-Free Sea Shop', 'Kosmetik, slik og mærkevarer op til 40% rabat.', 'assets/gonordic/images/taxfree-shop.jpg'),
+          _item(tr('explore.highlights.foodTitle'), tr('explore.highlights.foodSub'), 'assets/gonordic/images/chef-kitchen.jpg'),
+          _item(tr('explore.highlights.deckTitle'), tr('explore.highlights.deckSub'), 'assets/gonordic/images/family-window.jpg'),
+          _item(tr('explore.highlights.shopTitle'), tr('explore.highlights.shopSub'), 'assets/gonordic/images/taxfree-shop.jpg'),
         ],
       ),
     );

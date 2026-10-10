@@ -8,6 +8,7 @@ import '../models/departure_model.dart';
 import '../services/api_service.dart';
 
 import '../services/booking_service.dart';
+import '../services/texts_service.dart';
 import '../theme/gonordic_theme.dart';
 import '../widgets/cabin_card.dart';
 import 'boarding_pass_screen.dart';
@@ -67,7 +68,7 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
         _phoneCtrl.text = u.phone;
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(backgroundColor: GoNordicTheme.success, content: Text('✓ Kontaktoplysninger udfyldt fra ${u.fullName}s profil')),
+        SnackBar(backgroundColor: GoNordicTheme.success, content: Text(tr('bookingWizard.profileFilled', {'name': u.fullName}))),
       );
     }
   }
@@ -90,7 +91,7 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
 
     if (name.isEmpty || email.isEmpty || phone.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Udfyld venligst fulde navn, e-mail og telefonnummer.')),
+        SnackBar(content: Text(tr('bookingWizard.missingContact'))),
       );
       return;
     }
@@ -151,9 +152,9 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
     if (!mounted) return;
     if (session == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           backgroundColor: GoNordicTheme.error,
-          content: Text('Betalingsserveren kan ikke nås. Tjek din internetforbindelse eller prøv igen.'),
+          content: Text(tr('bookingWizard.paymentServerUnreachable')),
         ),
       );
       return;
@@ -181,7 +182,7 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
           Navigator.pop(ctx);
           ApiService().abandonPayment(session.paymentId);
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Betaling afbrudt. Reservationen er frigivet.')),
+            SnackBar(content: Text(tr('bookingWizard.paymentCancelled'))),
           );
         },
       ),
@@ -193,11 +194,11 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
     return Scaffold(
       backgroundColor: GoNordicTheme.sand,
       appBar: AppBar(
-        title: Text('Book Rejse • Trin $_step/5'),
+        title: Text(tr('bookingWizard.title', {'step': _step})),
         leading: _step > 1
             ? IconButton(
                 icon: const Icon(Icons.arrow_back),
-                tooltip: 'Forrige trin',
+                tooltip: tr('bookingWizard.previousStep'),
                 onPressed: () => setState(() => _step--),
               )
             : null,
@@ -217,7 +218,7 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
   Widget _step1() => ListView(
     padding: const EdgeInsets.all(16),
     children: [
-      const Text('1. Vælg Rute', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+      Text(tr('bookingWizard.step1.title'), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
       Card(
         child: Column(
           children: BookingService().routes.map((r) => ListTile(
@@ -231,14 +232,14 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
         ),
       ),
       const SizedBox(height: 12),
-      ElevatedButton(onPressed: () => setState(() => _step = 2), child: const Text('Vælg Kahyt →')),
+      ElevatedButton(onPressed: () => setState(() => _step = 2), child: Text(tr('bookingWizard.step1.next'))),
     ],
   );
 
   Widget _step2() => ListView(
     padding: const EdgeInsets.all(16),
     children: [
-      const Text('2. Vælg Kahyt', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+      Text(tr('bookingWizard.step2.title'), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
       const SizedBox(height: 8),
       ...CabinModel.defaultCabins.map((c) => CabinCard(
         cabin: c, isSelected: _cabin?.id == c.id,
@@ -249,13 +250,13 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
         onPressed: () {
           if (_cabin == null) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Vælg venligst en kahyt for at fortsætte.')),
+              SnackBar(content: Text(tr('bookingWizard.step2.selectCabin'))),
             );
             return;
           }
           setState(() => _step = 3);
         },
-        child: const Text('Tilvalg →'),
+        child: Text(tr('bookingWizard.step2.next')),
       ),
     ],
   );
@@ -263,7 +264,7 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
   Widget _step3() => ListView(
     padding: const EdgeInsets.all(16),
     children: [
-      const Text('3. Tilvalg & Måltider', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+      Text(tr('bookingWizard.step3.title'), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
       ...AddOnModel.defaultAddOns.map((a) => Card(
         child: CheckboxListTile(
           title: Text(a.name), subtitle: Text('${a.priceDkk.toInt()} DKK'),
@@ -277,7 +278,7 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
           }),
         ),
       )),
-      ElevatedButton(onPressed: () => setState(() => _step = 4), child: const Text('Kontaktoplysninger →')),
+      ElevatedButton(onPressed: () => setState(() => _step = 4), child: Text(tr('bookingWizard.step3.next'))),
     ],
   );
 
@@ -286,7 +287,7 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        const Text('4. Kontaktoplysninger & Profil', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+        Text(tr('bookingWizard.step4.title'), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
         if (user != null)
           Container(
@@ -302,11 +303,11 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
                 const Icon(Icons.check_circle, color: Color(0xFF34A853), size: 20),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: Text('Logget ind: ${user.fullName} (${user.clubTier})', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                  child: Text(tr('bookingWizard.step4.loggedInAs', {'name': user.fullName, 'tier': user.clubTier}), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
                 ),
                 TextButton(
                   onPressed: _useProfileData,
-                  child: const Text('Brug profil', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
+                  child: Text(tr('bookingWizard.step4.useProfile'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
                 ),
               ],
             ),
@@ -324,7 +325,7 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
               children: [
                 const Icon(Icons.person_outline, size: 20, color: GoNordicTheme.teal),
                 const SizedBox(width: 8),
-                const Expanded(child: Text('Log ind for hurtig udfyldelse', style: TextStyle(fontSize: 11))),
+                Expanded(child: Text(tr('bookingWizard.step4.loginForQuickFill'), style: const TextStyle(fontSize: 11))),
                 TextButton(
                   onPressed: () {
                     Navigator.push(context, MaterialPageRoute(builder: (_) => const LoginScreen())).then((_) {
@@ -338,7 +339,7 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
                       });
                     });
                   },
-                  child: const Text('Log ind', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
+                  child: Text(tr('bookingWizard.step4.login'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
                 ),
               ],
             ),
@@ -348,23 +349,23 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
             padding: const EdgeInsets.all(14),
             child: Column(
               children: [
-                TextField(controller: _nameCtrl, decoration: const InputDecoration(labelText: 'FULDE NAVN')),
+                TextField(controller: _nameCtrl, decoration: InputDecoration(labelText: tr('bookingWizard.step4.fullName'))),
                 const SizedBox(height: 8),
-                TextField(controller: _emailCtrl, decoration: const InputDecoration(labelText: 'E-MAIL')),
+                TextField(controller: _emailCtrl, decoration: InputDecoration(labelText: tr('bookingWizard.step4.email'))),
                 const SizedBox(height: 8),
-                TextField(controller: _phoneCtrl, decoration: const InputDecoration(labelText: 'MOBILNUMMER')),
+                TextField(controller: _phoneCtrl, decoration: InputDecoration(labelText: tr('bookingWizard.step4.mobile'))),
               ],
             ),
           ),
         ),
         const SizedBox(height: 8),
-        Text('Total: ${_total.toInt()} DKK', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: GoNordicTheme.pine)),
+        Text(tr('bookingWizard.step4.total', {'amount': _total.toInt()}), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: GoNordicTheme.pine)),
         const SizedBox(height: 10),
         ElevatedButton(
           onPressed: _isProcessingPayment ? null : _startPaymentFlow,
           child: _isProcessingPayment
               ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-              : const Text('Fortsæt til Betaling via Nets →'),
+              : Text(tr('bookingWizard.step4.continueToPayment')),
         ),
       ],
     );
@@ -383,7 +384,7 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
           const SizedBox(height: 10),
           const Icon(Icons.check_circle, color: GoNordicTheme.success, size: 48),
           const SizedBox(height: 8),
-          const Text('Booking Gennemført!', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          Text(tr('bookingWizard.step5.title'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           Text('${_booked?.pnr}', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: GoNordicTheme.pine)),
           const SizedBox(height: 20),
           SizedBox(
@@ -391,7 +392,7 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
             child: ElevatedButton.icon(
               onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => BoardingPassScreen(booking: _booked!))),
               icon: const Icon(Icons.qr_code_2),
-              label: const Text('Vis QR Boardingkort'),
+              label: Text(tr('bookingWizard.step5.showBoardingPass')),
             ),
           ),
           const SizedBox(height: 10),
@@ -410,7 +411,7 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
                   });
                 }
               },
-              child: const Text('Tilbage til Forsiden'),
+              child: Text(tr('bookingWizard.step5.backToHome')),
             ),
           ),
         ],
@@ -444,7 +445,7 @@ class _NetsPaymentSheetState extends State<_NetsPaymentSheet> {
     final returnUrl = widget.session.returnUrl;
     final cancelUrl = widget.session.cancelUrl;
     if (page == null || returnUrl == null || cancelUrl == null) {
-      setState(() => _errorMessage = 'Betalingssiden kunne ikke åbnes. Prøv igen.');
+      setState(() => _errorMessage = tr('bookingWizard.payment.pageUnavailable'));
       return;
     }
     setState(() => _errorMessage = null);
@@ -456,7 +457,7 @@ class _NetsPaymentSheetState extends State<_NetsPaymentSheet> {
     );
     if (!mounted) return;
     if (paid != true) {
-      setState(() => _errorMessage = 'Betalingen blev ikke gennemført. Du kan prøve igen eller annullere.');
+      setState(() => _errorMessage = tr('bookingWizard.payment.notCompleted'));
       return;
     }
 
@@ -469,14 +470,14 @@ class _NetsPaymentSheetState extends State<_NetsPaymentSheet> {
       } else {
         setState(() {
           _isCompleting = false;
-          _errorMessage = res.errorMessage ?? 'Betalingen kunne ikke bekræftes. Kontakt kundeservice med booking ${widget.session.pnr}.';
+          _errorMessage = res.errorMessage ?? tr('bookingWizard.payment.notConfirmed', {'pnr': widget.session.pnr});
         });
       }
     } catch (_) {
       if (!mounted) return;
       setState(() {
         _isCompleting = false;
-        _errorMessage = 'Netværksfejl under bekræftelsen. Kontakt kundeservice med booking ${widget.session.pnr}.';
+        _errorMessage = tr('bookingWizard.payment.networkError', {'pnr': widget.session.pnr});
       });
     }
   }
@@ -508,8 +509,8 @@ class _NetsPaymentSheetState extends State<_NetsPaymentSheet> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Sikker betaling via Nets', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                      Text('Booking ${widget.session.pnr} · pladsen er reserveret', style: const TextStyle(fontSize: 11, color: GoNordicTheme.textSecondary)),
+                      Text(tr('bookingWizard.payment.title'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                      Text(tr('bookingWizard.payment.reserved', {'pnr': widget.session.pnr}), style: const TextStyle(fontSize: 11, color: GoNordicTheme.textSecondary)),
                     ],
                   ),
                 ],
@@ -531,7 +532,7 @@ class _NetsPaymentSheetState extends State<_NetsPaymentSheet> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('At betale', style: TextStyle(fontSize: 13, color: GoNordicTheme.textSecondary, fontWeight: FontWeight.bold)),
+                Text(tr('bookingWizard.payment.amountDue'), style: const TextStyle(fontSize: 13, color: GoNordicTheme.textSecondary, fontWeight: FontWeight.bold)),
                 Text(
                   '${widget.session.amountDkk.toInt()} DKK',
                   style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: GoNordicTheme.pineDark, fontFamily: 'monospace'),
@@ -554,8 +555,8 @@ class _NetsPaymentSheetState extends State<_NetsPaymentSheet> {
                 Expanded(
                   child: Text(
                     widget.session.provider == 'simulator'
-                        ? 'Testmiljø: Nets-simulatoren bruges – ingen rigtige penge.'
-                        : 'Du betaler sikkert hos Nets. Pengene trækkes først, når bookingen er bekræftet.',
+                        ? tr('bookingWizard.payment.simulatorNotice')
+                        : tr('bookingWizard.payment.secureNotice'),
                     style: const TextStyle(fontSize: 11, color: Color(0xFF92400E), fontWeight: FontWeight.w600),
                   ),
                 ),
@@ -574,20 +575,20 @@ class _NetsPaymentSheetState extends State<_NetsPaymentSheet> {
           ElevatedButton(
             onPressed: _isCompleting ? null : _payAndComplete,
             child: _isCompleting
-                ? const Row(
+                ? Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)),
-                      SizedBox(width: 10),
-                      Text('Verificerer hos Nets & Core...'),
+                      const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)),
+                      const SizedBox(width: 10),
+                      Text(tr('bookingWizard.payment.verifying')),
                     ],
                   )
-                : const Text('Betal med kort eller MobilePay'),
+                : Text(tr('bookingWizard.payment.pay')),
           ),
           const SizedBox(height: 8),
           OutlinedButton(
             onPressed: _isCompleting ? null : widget.onCancel,
-            child: const Text('Annuller betaling'),
+            child: Text(tr('bookingWizard.payment.cancel')),
           ),
         ],
       ),
