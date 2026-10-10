@@ -69,6 +69,7 @@
     "previousStep": "Forrige trin",
     "step1": {
       "title": "1. Vælg Rute",
+      "departure": "Afgang: {date} kl. {time}",
       "next": "Vælg Kahyt →"
     },
     "step2": {

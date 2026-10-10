@@ -84,44 +84,47 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
 
   bool _isProcessingPayment = false;
 
-  Future<void> _startPaymentFlow() async {
-    final name = _nameCtrl.text.trim();
-    final email = _emailCtrl.text.trim();
-    final phone = _phoneCtrl.text.trim();
+  /// Prisen fra Core for det valgte (vises på trin 4, så den svarer til beløbet hos Nets)
+  double? _serverTotal;
 
-    if (name.isEmpty || email.isEmpty || phone.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(tr('bookingWizard.missingContact'))),
-      );
-      return;
+  Future<void> _refreshQuote() async {
+    final dep = _nextDeparture();
+    if (dep == null) return;
+    setState(() => _serverTotal = null);
+    final draft = await _buildDraft(dep, firstName: 'Pris', lastName: 'Beregning', name: _nameCtrl.text, email: _emailCtrl.text, phone: _phoneCtrl.text);
+    final total = await ApiService().quoteTotal(draft);
+    if (mounted) setState(() => _serverTotal = total);
+  }
+
+  // Appens kahytskategorier ⇒ Core's BookIT-koder (første ledige kahyt i kategorien bookes)
+  static const Map<String, List<String>> _cabinCodes = {
+    'OWNERS_SUITE': ['O2', 'O3', 'J3'],
+    'COMMODORE_BALCONY': ['X2', 'X1'],
+    'COMMODORE_DELUXE': ['X2', 'X1'],
+    'COMMODORE_SEAVIEW': ['C2'],
+    'STANDARD_SEAVIEW': ['A4', 'A4LV'],
+    'STANDARD_INSIDE': ['B4', 'B2', 'B3', 'BD', 'BC'],
+    'ECONOMY_INSIDE': ['E4', 'WL'],
+    'FAMILY': ['B5', 'F4', 'F4LV'],
+  };
+
+  /// En ledig kahyt i Core i den valgte kategori (eller null uden kahyt).
+  Future<String?> _resolveCabinId(DepartureModel dep) async {
+    if (_cabin == null) return null;
+    final cabins = await ApiService().fetchDepartureCabins(dep.id);
+    final free = cabins.where((c) => c['isBookedOnDeparture'] != true && c['isBooked'] != true).toList();
+    final codes = _cabinCodes[_cabin!.category] ?? const <String>[];
+    for (final code in codes) {
+      final hit = free.where((c) => c['category'] == code).toList();
+      if (hit.isNotEmpty) return hit.first['id'] as String?;
     }
+    return free.isNotEmpty ? free.first['id'] as String? : null;
+  }
 
-    setState(() => _isProcessingPayment = true);
-
-    final nameParts = name.split(' ');
-    final firstName = nameParts.first;
-    final lastName = nameParts.length > 1 ? nameParts.sublist(1).join(' ') : 'Jensen';
+  Future<Map<String, dynamic>> _buildDraft(DepartureModel dep, {required String firstName, required String lastName, required String name, required String email, required String phone}) async {
     final user = AuthService().currentUser;
-
-    final departures = BookingService().departures;
-    final dep = departures.firstWhere(
-      (d) => d.routeId == _routeId,
-      orElse: () => departures.isNotEmpty
-          ? departures.first
-          : DepartureModel(
-              id: 'DEP-CPH-OSL-TOMORROW',
-              routeId: _routeId,
-              vesselId: 'VESSEL-CROWN',
-              vesselName: 'Crown Seaways',
-              scheduledDepartureTime: DateTime.now().add(const Duration(days: 1)),
-              scheduledArrivalTime: DateTime.now().add(const Duration(days: 1, hours: 17, minutes: 30)),
-              gateNumber: 'Gate 1 (Terminal Dampfærgevej)',
-              checkInOpen: true,
-              basePriceDkk: 890,
-            ),
-    );
-
-    final draft = {
+    final cabinId = await _resolveCabinId(dep);
+    return {
       'termsAccepted': true,
       'routeId': _routeId,
       'departureId': dep.id,
@@ -142,9 +145,50 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
         'email': email,
         'phone': phone,
       },
-      'selectedCabinIds': [_cabin?.id ?? 'CAB-STD'],
-      'addOns': _addons.entries.map((e) => {'name': e.key, 'quantity': e.value}).toList(),
+      'selectedCabinIds': [?cabinId],
+      'cabinIds': [?cabinId], // prisberegningen (/pricing/calculate) bruger cabinIds
+      'addOns': _addons.entries.map((e) => {'id': e.key, 'quantity': e.value}).toList(),
     };
+
+  }
+
+  Future<void> _startPaymentFlow() async {
+    final name = _nameCtrl.text.trim();
+    final email = _emailCtrl.text.trim();
+    final phone = _phoneCtrl.text.trim();
+
+    if (name.isEmpty || email.isEmpty || phone.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(tr('bookingWizard.missingContact'))),
+      );
+      return;
+    }
+
+    setState(() => _isProcessingPayment = true);
+
+    final nameParts = name.split(' ');
+    final firstName = nameParts.first;
+    final lastName = nameParts.length > 1 ? nameParts.sublist(1).join(' ') : 'Jensen';
+
+    final departures = BookingService().departures;
+    final dep = _nextDeparture() ?? departures.firstWhere(
+      (d) => d.routeId == _routeId,
+      orElse: () => departures.isNotEmpty
+          ? departures.first
+          : DepartureModel(
+              id: 'DEP-CPH-OSL-TOMORROW',
+              routeId: _routeId,
+              vesselId: 'VESSEL-CROWN',
+              vesselName: 'Crown Seaways',
+              scheduledDepartureTime: DateTime.now().add(const Duration(days: 1)),
+              scheduledArrivalTime: DateTime.now().add(const Duration(days: 1, hours: 17, minutes: 30)),
+              gateNumber: 'Gate 1 (Terminal Dampfærgevej)',
+              checkInOpen: true,
+              basePriceDkk: 890,
+            ),
+    );
+
+    final draft = await _buildDraft(dep, firstName: firstName, lastName: lastName, name: name, email: email, phone: phone);
 
     final session = await ApiService().startCheckout(draft);
     setState(() => _isProcessingPayment = false);
@@ -215,6 +259,18 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
     return _step5();
   }
 
+  /// Næste afgang på den valgte rute, der ikke er sejlet (mindst 30 min. til afgang).
+  DepartureModel? _nextDeparture() {
+    final cutoff = DateTime.now().add(const Duration(minutes: 30));
+    final upcoming = BookingService().departures
+        .where((d) => d.routeId == _routeId && d.scheduledDepartureTime.isAfter(cutoff))
+        .toList()
+      ..sort((a, b) => a.scheduledDepartureTime.compareTo(b.scheduledDepartureTime));
+    return upcoming.isEmpty ? null : upcoming.first;
+  }
+
+  String _two(int n) => n.toString().padLeft(2, '0');
+
   Widget _step1() => ListView(
     padding: const EdgeInsets.all(16),
     children: [
@@ -232,6 +288,18 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
         ),
       ),
       const SizedBox(height: 12),
+      Builder(builder: (context) {
+        final dep = _nextDeparture();
+        if (dep == null) return const SizedBox.shrink();
+        final t = dep.scheduledDepartureTime.toLocal();
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: Text(
+            tr('bookingWizard.step1.departure', {'date': '${t.day}/${t.month}-${t.year}', 'time': '${_two(t.hour)}:${_two(t.minute)}'}),
+            style: const TextStyle(fontWeight: FontWeight.w600, color: GoNordicTheme.pine),
+          ),
+        );
+      }),
       ElevatedButton(onPressed: () => setState(() => _step = 2), child: Text(tr('bookingWizard.step1.next'))),
     ],
   );
@@ -278,7 +346,7 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
           }),
         ),
       )),
-      ElevatedButton(onPressed: () => setState(() => _step = 4), child: Text(tr('bookingWizard.step3.next'))),
+      ElevatedButton(onPressed: () { setState(() => _step = 4); _refreshQuote(); }, child: Text(tr('bookingWizard.step3.next'))),
     ],
   );
 
@@ -359,7 +427,7 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
           ),
         ),
         const SizedBox(height: 8),
-        Text(tr('bookingWizard.step4.total', {'amount': _total.toInt()}), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: GoNordicTheme.pine)),
+        Text(tr('bookingWizard.step4.total', {'amount': (_serverTotal ?? _total).toInt()}), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: GoNordicTheme.pine)),
         const SizedBox(height: 10),
         ElevatedButton(
           onPressed: _isProcessingPayment ? null : _startPaymentFlow,

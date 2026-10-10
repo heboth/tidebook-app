@@ -314,6 +314,34 @@ class ApiService {
   // ==========================================
 
   /// Start checkout session: Core registers draft as PENDING and creates Nets session
+  /// Kahytter på en afgang fra Core (id, kategori som BookIT-kode, køjer, om den er optaget).
+  Future<List<Map<String, dynamic>>> fetchDepartureCabins(String departureId) async {
+    try {
+      final res = await http.get(Uri.parse('$baseUrl/departures/${Uri.encodeComponent(departureId)}/cabins')).timeout(const Duration(seconds: 4));
+      if (res.statusCode == 200) {
+        final body = jsonDecode(res.body);
+        final list = (body is Map ? body['cabins'] : body) as List? ?? const [];
+        return list.whereType<Map<String, dynamic>>().toList();
+      }
+    } catch (_) {}
+    return const [];
+  }
+
+  /// Serverens pris for en bookingkladde (samme beregning som ved betaling). null hvis Core ikke svarer.
+  Future<double?> quoteTotal(Map<String, dynamic> bookingDraft) async {
+    try {
+      final res = await http
+          .post(Uri.parse('$baseUrl/pricing/calculate'), headers: {'Content-Type': 'application/json'}, body: jsonEncode(bookingDraft))
+          .timeout(const Duration(seconds: 6));
+      if (res.statusCode == 200) {
+        final body = jsonDecode(res.body) as Map<String, dynamic>;
+        final total = body['totalAmountDkk'] ?? (body['fareBreakdown'] as Map?)?['totalAmountDkk'];
+        return (total as num?)?.toDouble();
+      }
+    } catch (_) {}
+    return null;
+  }
+
   Future<CheckoutSession?> startCheckout(
     Map<String, dynamic> bookingDraft, {
     String? checkoutUrl,
