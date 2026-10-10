@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/user_model.dart';
 import '../services/auth_service.dart';
+import '../services/texts_service.dart';
 import '../theme/gonordic_theme.dart';
 import 'login_screen.dart';
 
@@ -23,31 +24,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Rediger Profil & Stamdata', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+        title: Text(tr('profile.editTitle'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              TextField(controller: nameCtrl, decoration: const InputDecoration(labelText: 'Fulde Navn')),
+              TextField(controller: nameCtrl, decoration: InputDecoration(labelText: tr('profile.fullName'))),
               const SizedBox(height: 6),
-              TextField(controller: phoneCtrl, decoration: const InputDecoration(labelText: 'Mobilnummer')),
+              TextField(controller: phoneCtrl, decoration: InputDecoration(labelText: tr('profile.mobileNumber'))),
               const SizedBox(height: 6),
-              TextField(controller: addrCtrl, decoration: const InputDecoration(labelText: 'Adresse')),
+              TextField(controller: addrCtrl, decoration: InputDecoration(labelText: tr('profile.address'))),
               const SizedBox(height: 6),
               Row(
                 children: [
-                  Expanded(child: TextField(controller: postCtrl, decoration: const InputDecoration(labelText: 'Postnr'))),
+                  Expanded(child: TextField(controller: postCtrl, decoration: InputDecoration(labelText: tr('profile.postalCode')))),
                   const SizedBox(width: 8),
-                  Expanded(flex: 2, child: TextField(controller: cityCtrl, decoration: const InputDecoration(labelText: 'By'))),
+                  Expanded(flex: 2, child: TextField(controller: cityCtrl, decoration: InputDecoration(labelText: tr('profile.city')))),
                 ],
               ),
               const SizedBox(height: 6),
-              TextField(controller: plateCtrl, decoration: const InputDecoration(labelText: 'Nummerplade (Bil)')),
+              TextField(controller: plateCtrl, decoration: InputDecoration(labelText: tr('profile.licensePlateCar'))),
             ],
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Annuller')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(tr('profile.cancel'))),
           ElevatedButton(
             onPressed: () {
               final up = user.copyWith(
@@ -62,7 +63,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Navigator.pop(ctx);
               setState(() {});
             },
-            child: const Text('Gem'),
+            child: Text(tr('profile.save')),
           ),
         ],
       ),
@@ -82,7 +83,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget _buildLoggedOut(AuthService auth) {
     return Scaffold(
       backgroundColor: GoNordicTheme.sand,
-      appBar: AppBar(title: const Text('Min Profil')),
+      appBar: AppBar(title: Text(tr('profile.title'))),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(20),
@@ -97,15 +98,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     child: Image.asset('assets/gonordic/app_icon.png', width: 64, height: 64, fit: BoxFit.cover),
                   ),
                   const SizedBox(height: 12),
-                  const Text('Log ind på din profil', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  Text(tr('profile.loginHeading'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 6),
-                  const Text('Gem dine stamdata, adresse og bilnummer, så din booking udfyldes automatisk.', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: GoNordicTheme.textSecondary)),
+                  Text(tr('profile.loginIntro'), textAlign: TextAlign.center, style: const TextStyle(fontSize: 12, color: GoNordicTheme.textSecondary)),
                   const SizedBox(height: 16),
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
                       onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const LoginScreen())).then((_) => setState(() {})),
-                      child: const Text('Log ind / Opret profil'),
+                      child: Text(tr('profile.loginOrCreate')),
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -114,7 +115,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       auth.loginAsDemoCustomer();
                       setState(() {});
                     },
-                    child: const Text('Demo: Log ind som Mads Jensen'),
+                    child: Text(tr('profile.demoLogin')),
                   ),
                 ],
               ),
@@ -129,7 +130,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Scaffold(
       backgroundColor: GoNordicTheme.sand,
       appBar: AppBar(
-        title: const Text('Min Profil & Personlige Data'),
+        title: Text(tr('profile.loggedInTitle')),
         actions: [
           IconButton(icon: const Icon(Icons.logout), onPressed: () { auth.logout(); setState(() {}); }),
         ],
@@ -159,9 +160,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 const SizedBox(height: 12),
                 Text(user.fullName, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-                Text('Medlemsnr: ${user.clubMemberNumber}', style: const TextStyle(color: Colors.white70, fontSize: 11)),
+                Text(tr('profile.memberNumber', {'number': user.clubMemberNumber}), style: const TextStyle(color: Colors.white70, fontSize: 11)),
                 const SizedBox(height: 8),
-                Text('Opsparede bonuspoint: ${user.clubPoints}', style: const TextStyle(color: GoNordicTheme.lime, fontWeight: FontWeight.bold, fontSize: 13)),
+                Text(tr('profile.bonusPoints', {'points': user.clubPoints}), style: const TextStyle(color: GoNordicTheme.lime, fontWeight: FontWeight.bold, fontSize: 13)),
               ],
             ),
           ),
@@ -175,18 +176,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text('Personlige Stamdata', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+                      Text(tr('profile.personalData'), style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
                       IconButton(icon: const Icon(Icons.edit, size: 18, color: GoNordicTheme.teal), onPressed: () => _editData(user)),
                     ],
                   ),
                   const Divider(),
-                  _row('Navn', user.fullName),
-                  _row('E-mail', user.email),
-                  _row('Mobil', user.phone),
-                  _row('Adresse', '${user.address}, ${user.postalCode} ${user.city}'),
-                  _row('Nationalitet', user.nationality),
-                  _row('Pasnummer', user.passportNumber),
-                  _row('Fødselsdato', user.birthDate),
+                  _row(tr('profile.name'), user.fullName),
+                  _row(tr('profile.email'), user.email),
+                  _row(tr('profile.mobile'), user.phone),
+                  _row(tr('profile.addressRow'), '${user.address}, ${user.postalCode} ${user.city}'),
+                  _row(tr('profile.nationality'), user.nationality),
+                  _row(tr('profile.passportNumber'), user.passportNumber),
+                  _row(tr('profile.birthDate'), user.birthDate),
                 ],
               ),
             ),
@@ -198,11 +199,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Gemt Køretøj', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+                  Text(tr('profile.savedVehicle'), style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
                   const Divider(),
-                  _row('Nummerplade', user.savedVehiclePlate),
-                  _row('Køretøjstype', 'Almindelig Personbil'),
-                  _row('Drivmiddel', user.isElectricVehicle ? '⚡ 100% Elektrisk (Elbil)' : 'Benzin/Diesel'),
+                  _row(tr('profile.licensePlate'), user.savedVehiclePlate),
+                  _row(tr('profile.vehicleType'), tr('profile.vehicleTypeCar')),
+                  _row(tr('profile.fuel'), user.isElectricVehicle ? tr('profile.fuelElectric') : tr('profile.fuelCombustion')),
                 ],
               ),
             ),

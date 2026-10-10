@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/cabin_model.dart';
+import '../services/texts_service.dart';
 import '../theme/gonordic_theme.dart';
 
 class CabinCard extends StatelessWidget {
@@ -57,9 +58,9 @@ class CabinCard extends StatelessWidget {
                           color: GoNordicTheme.lime,
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: const Text(
-                          'INKL. MORGENMAD',
-                          style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: GoNordicTheme.pineDark),
+                        child: Text(
+                          tr('widgets.cabinCard.breakfastIncluded'),
+                          style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: GoNordicTheme.pineDark),
                         ),
                       ),
                     ),
@@ -98,7 +99,7 @@ class CabinCard extends StatelessWidget {
                         backgroundColor: isSelected ? GoNordicTheme.pine : GoNordicTheme.lime,
                         foregroundColor: isSelected ? Colors.white : GoNordicTheme.pineDark,
                       ),
-                      child: Text(isSelected ? '✓ Valgt' : 'Vælg kahyt'),
+                      child: Text(isSelected ? tr('widgets.cabinCard.selected') : tr('widgets.cabinCard.select')),
                     ),
                   ),
                 ],

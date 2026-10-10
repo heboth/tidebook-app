@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import '../services/qr_security_service.dart';
 import '../theme/gonordic_theme.dart';
+import '../services/texts_service.dart';
 
 class MaritimeQrWidget extends StatelessWidget {
   final String qrPayload;
@@ -28,14 +29,14 @@ class MaritimeQrWidget extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: GoNordicTheme.border, width: 2),
         ),
-        child: const Column(
+        child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.qr_code_2, size: 48, color: GoNordicTheme.textSecondary),
-            SizedBox(height: 8),
+            const Icon(Icons.qr_code_2, size: 48, color: GoNordicTheme.textSecondary),
+            const SizedBox(height: 8),
             Text(
-              'Check-in påkrævet',
-              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: GoNordicTheme.pine),
+              tr('widgets.qr.checkInRequired'),
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: GoNordicTheme.pine),
               textAlign: TextAlign.center,
             ),
           ],
@@ -85,7 +86,7 @@ class MaritimeQrWidget extends StatelessWidget {
               const Icon(Icons.verified_user, size: 12, color: GoNordicTheme.teal),
               const SizedBox(width: 4),
               Text(
-                'SOLAS GATE KONTROL: $secCode',
+                tr('widgets.qr.gateControl', {'code': secCode}),
                 style: const TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.w800,

@@ -1,0 +1,111 @@
+import 'dart:async';
+import 'dart:convert';
+import 'dart:io' show Platform;
+
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart' show rootBundle;
+import 'package:http/http.dart' as http;
+
+/// Appens tekster.
+///
+/// Den danske pakke ligger i appen (`assets/i18n/da.json`) og bruges altid først, så appen virker
+/// uden net. Den udgivne pakke `tidebookapp` fra TideCMS lægges ovenpå – kun strenge, og kun hvor
+/// nøglen findes i forvejen – så rettelser og nye sprog i TideCMS slår igennem uden ny app-version.
+/// Mangler en tekst på et sprog, leverer TideCMS den danske.
+class TextsService {
+  TextsService._();
+  static final TextsService instance = TextsService._();
+
+  static const supported = ['da', 'en', 'no', 'sv', 'de', 'fr', 'es'];
+  static const _namespace = 'tidebookapp';
+
+  /// Ændres, når brugeren skifter sprog – appen genopbygges da forfra. Tekster, der kommer fra TideCMS
+  /// efter start, bruges fra næste skærm (ingen genopbygning midt i fx en booking).
+  final ValueNotifier<int> revision = ValueNotifier(0);
+
+  Map<String, dynamic> _bundled = const {};
+  Map<String, dynamic> _texts = const {};
+  String _language = 'da';
+
+  String get language => _language;
+
+  static String get tideCmsUrl {
+    const env = String.fromEnvironment('TIDECMS_URL');
+    if (env.isNotEmpty) return env.replaceFirst(RegExp(r'/+$'), '');
+    try {
+      if (Platform.isAndroid) return 'http://10.0.2.2:4300';
+    } catch (_) {}
+    return 'http://localhost:4300';
+  }
+
+  /// Indlæser den indbyggede pakke og venter kort på TideCMS (højst `wait`), så første skærm har de
+  /// udgivne tekster. Svarer TideCMS senere, bruges teksterne fra næste skærm.
+  Future<void> init({String? language, Duration wait = const Duration(milliseconds: 1500)}) async {
+    _bundled = jsonDecode(await rootBundle.loadString('assets/i18n/da.json')) as Map<String, dynamic>;
+    _texts = _bundled;
+    final device = PlatformDispatcher.instance.locale.languageCode;
+    _language = language ?? (supported.contains(device) ? device : 'da');
+    final fetch = refresh();
+    await Future.any([fetch, Future.delayed(wait)]);
+  }
+
+  /// Til tests: sæt pakken direkte.
+  @visibleForTesting
+  void load(Map<String, dynamic> bundled, {Map<String, dynamic>? remote}) {
+    _bundled = bundled;
+    _texts = remote == null ? bundled : overlay(bundled, remote) as Map<String, dynamic>;
+    revision.value++;
+  }
+
+  Future<void> setLanguage(String lang) async {
+    if (!supported.contains(lang)) return;
+    _language = lang;
+    _texts = _bundled;
+    await refresh();
+    revision.value++;
+  }
+
+  Future<void> refresh() async {
+    try {
+      final res = await http
+          .get(Uri.parse('$tideCmsUrl/api/v1/bundles/$_namespace/$_language'))
+          .timeout(const Duration(seconds: 4));
+      if (res.statusCode != 200) return;
+      final remote = jsonDecode(utf8.decode(res.bodyBytes));
+      _texts = overlay(_bundled, remote) as Map<String, dynamic>;
+    } catch (_) {
+      // TideCMS kan ikke nås – de indbyggede tekster bruges
+    }
+  }
+
+  /// Teksten på `key` ("home.title"). Pladsholdere som {count} udfyldes fra `vars`.
+  /// Findes nøglen ikke, returneres nøglen selv (så en manglende tekst ses, men appen ikke fejler).
+  String tr(String key, [Map<String, Object?> vars = const {}]) {
+    dynamic node = _texts;
+    for (final part in key.split('.')) {
+      if (node is Map<String, dynamic> && node.containsKey(part)) {
+        node = node[part];
+      } else {
+        return key;
+      }
+    }
+    if (node is! String) return key;
+    return node.replaceAllMapped(RegExp(r'\{(\w+)\}'), (m) => vars.containsKey(m[1]) ? '${vars[m[1]]}' : m[0]!);
+  }
+
+  /// Lægger kun strenge fra `remote` oven på `base`, og kun hvor nøglen findes i `base`.
+  static dynamic overlay(dynamic base, dynamic remote) {
+    if (base is String) return remote is String && remote.trim().isNotEmpty ? remote : base;
+    if (base is List) {
+      return [for (var i = 0; i < base.length; i++) overlay(base[i], remote is List && i < remote.length ? remote[i] : null)];
+    }
+    if (base is Map<String, dynamic>) {
+      final r = remote is Map ? remote : const {};
+      return {for (final e in base.entries) e.key: overlay(e.value, r[e.key])};
+    }
+    return base;
+  }
+}
+
+/// Kort form: `tr('home.title')`.
+String tr(String key, [Map<String, Object?> vars = const {}]) => TextsService.instance.tr(key, vars);

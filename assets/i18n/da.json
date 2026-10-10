@@ -1,0 +1,253 @@
+{
+  "home": {
+    "noPass": {
+      "title": "Boardingkort",
+      "heading": "Intet aktivt boardingkort fundet",
+      "body": "Søg din eksisterende reservation frem under Mine Bookinger, eller gennemfør en ny booking for at se dit QR boardingkort.",
+      "findBooking": "Find Eksisterende Booking",
+      "bookNew": "Book Ny Rejse"
+    },
+    "nav": {
+      "explore": "Udforsk",
+      "book": "Book Rejse",
+      "myBookings": "Mine Bookinger",
+      "boardingPass": "Boardingkort",
+      "profile": "Min Profil"
+    }
+  },
+  "explore": {
+    "passengerModal": {
+      "title": "Vælg Rejsende & Køretøj",
+      "adults": "Voksne",
+      "children": "Børn (0-15 år)",
+      "bringVehicle": "Medbring bil / køretøj",
+      "bringVehicleSub": "Personbil under 1.85m højde",
+      "confirm": "Bekræft"
+    },
+    "profileTooltip": "Profil",
+    "bannerBadge": "MINICRUISE TILBUD",
+    "bannerText": "Sejl København-Oslo tur/retur fra kun 890 DKK →",
+    "hero": {
+      "badge": "DAGLIGE AFGANGE KØBENHAVN ⇄ OSLO",
+      "title": "Oplev Norge fra søsiden",
+      "subtitle": "2 nætter til søs • Gastronomi • Panoramadæk"
+    },
+    "profileBar": {
+      "greeting": "Hej, {name} ({tier}) 👋",
+      "ready": "Stamdata, pas og elbil ({plate}) er klar til brug.",
+      "loginTitle": "Log ind for at bruge dine gemte data",
+      "loginSub": "Udfylder bilnummer og kontaktoplysninger automatisk.",
+      "loginLink": "Log ind →"
+    },
+    "search": {
+      "ferryTab": "Færgeoverfart",
+      "routeCphOsl": "København → Oslo",
+      "routeOslCph": "Oslo → København",
+      "adults": "{count} voksne",
+      "children": "{count} børn",
+      "vehicle": "Bil",
+      "findDepartures": "Find Afgange & Book Kahyt →"
+    },
+    "priceCalendar": "LAVPRISKALENDER (14 DAGE)",
+    "highlights": {
+      "title": "OPLEVELSER OM BORD",
+      "seeAll": "Se alle guide →",
+      "foodTitle": "Skandinavisk Gastronomi & Buffeter",
+      "foodSub": "7 Seas buffet og frisk morgenmad.",
+      "deckTitle": "Panoramadæk & Saloner",
+      "deckSub": "Udsigt over Kattegat og Oslofjorden.",
+      "shopTitle": "Tax-Free Sea Shop",
+      "shopSub": "Kosmetik, slik og mærkevarer op til 40% rabat."
+    }
+  },
+  "bookingWizard": {
+    "profileFilled": "✓ Kontaktoplysninger udfyldt fra {name}s profil",
+    "missingContact": "Udfyld venligst fulde navn, e-mail og telefonnummer.",
+    "paymentServerUnreachable": "Betalingsserveren kan ikke nås. Tjek din internetforbindelse eller prøv igen.",
+    "paymentCancelled": "Betaling afbrudt. Reservationen er frigivet.",
+    "title": "Book Rejse • Trin {step}/5",
+    "previousStep": "Forrige trin",
+    "step1": {
+      "title": "1. Vælg Rute",
+      "next": "Vælg Kahyt →"
+    },
+    "step2": {
+      "title": "2. Vælg Kahyt",
+      "selectCabin": "Vælg venligst en kahyt for at fortsætte.",
+      "next": "Tilvalg →"
+    },
+    "step3": {
+      "title": "3. Tilvalg & Måltider",
+      "next": "Kontaktoplysninger →"
+    },
+    "step4": {
+      "title": "4. Kontaktoplysninger & Profil",
+      "loggedInAs": "Logget ind: {name} ({tier})",
+      "useProfile": "Brug profil",
+      "loginForQuickFill": "Log ind for hurtig udfyldelse",
+      "login": "Log ind",
+      "fullName": "FULDE NAVN",
+      "email": "E-MAIL",
+      "mobile": "MOBILNUMMER",
+      "total": "Total: {amount} DKK",
+      "continueToPayment": "Fortsæt til Betaling via Nets →"
+    },
+    "step5": {
+      "title": "Booking Gennemført!",
+      "showBoardingPass": "Vis QR Boardingkort",
+      "backToHome": "Tilbage til Forsiden"
+    },
+    "payment": {
+      "pageUnavailable": "Betalingssiden kunne ikke åbnes. Prøv igen.",
+      "notCompleted": "Betalingen blev ikke gennemført. Du kan prøve igen eller annullere.",
+      "notConfirmed": "Betalingen kunne ikke bekræftes. Kontakt kundeservice med booking {pnr}.",
+      "networkError": "Netværksfejl under bekræftelsen. Kontakt kundeservice med booking {pnr}.",
+      "title": "Sikker betaling via Nets",
+      "reserved": "Booking {pnr} · pladsen er reserveret",
+      "amountDue": "At betale",
+      "simulatorNotice": "Testmiljø: Nets-simulatoren bruges – ingen rigtige penge.",
+      "secureNotice": "Du betaler sikkert hos Nets. Pengene trækkes først, når bookingen er bekræftet.",
+      "verifying": "Verificerer hos Nets & Core...",
+      "pay": "Betal med kort eller MobilePay",
+      "cancel": "Annuller betaling"
+    }
+  },
+  "myBookings": {
+    "missingFields": "Indtast venligst både bookingnummer (PNR) og e-mail/efternavn.",
+    "found": "✓ Booking fundet: {pnr}",
+    "title": "Mine Bookinger & Boardingkort",
+    "findHeading": "Find Din Reservation",
+    "findIntro": "Indtast bookingnummer (PNR) og e-mail for at hente dit boardingkort.",
+    "pnrLabel": "BOOKINGNUMMER (PNR)",
+    "pnrHint": "F.eks. TIDE-9021",
+    "emailLabel": "E-MAIL ELLER EFTERNAVN",
+    "emailHint": "F.eks. mads.jensen@example.dk",
+    "findButton": "Find Booking",
+    "testLabel": "Test:",
+    "yourReservations": "DINE RESERVATIONER",
+    "checkInDone": "✓ Mobil Check-in gennemført! Boardingkort udstedt.",
+    "checkInRejected": "Check-in afvist af serveren."
+  },
+  "bookingDetail": {
+    "checkInDone": "✓ Mobil Check-in gennemført! Boardingkort er udstedt.",
+    "checkInRejected": "Check-in afvist af serveren.",
+    "title": "Booking {pnr}",
+    "departure": "{date} kl. {time} • {ship}",
+    "status": "Status",
+    "cabin": "Kahyt",
+    "passengers": "Passagerer",
+    "vehicle": "Køretøj",
+    "totalPrice": "Samlet pris",
+    "totalPaid": "{amount} DKK (Betalt)",
+    "showBoardingPass": "Vis QR Boardingkort",
+    "checkIn": "Gennemfør Mobil Check-in"
+  },
+  "boardingPass": {
+    "checkInDone": "✓ Check-in gennemført! Officielt boardingkort modtaget.",
+    "checkInFailed": "Check-in kunne ikke gennemføres.",
+    "title": "Boardingkort",
+    "statusCheckedIn": "TJEKKET IND",
+    "statusReady": "KLAR",
+    "issuedAtCheckIn": "Officielt boardingkort udstedes ved check-in",
+    "issuedAtCheckInBody": "Gennemfør mobil check-in for at modtage dit krypografisk signerede boardingkort fra TideBook Core.",
+    "checkingIn": "Tjekker ind hos Core...",
+    "checkInNow": "Tjek ind nu",
+    "passenger": "Passager",
+    "departure": "Afgang",
+    "ship": "Færge",
+    "cabin": "Kahyt",
+    "gate": "Gate",
+    "vehicle": "Køretøj",
+    "onFoot": "Gående"
+  },
+  "login": {
+    "welcome": "Velkommen, {name}!",
+    "profileTitle": "Passagerprofil",
+    "logout": "Log ud",
+    "title": "Passager Login",
+    "individualOnly": "Kun for individuelle passagerer. Gruppeleder- og Online Agent (OA) logins afvises automatisk.",
+    "heading": "Log ind på din konto",
+    "usernameLabel": "BRUGERNAVN ELLER E-MAIL",
+    "passwordLabel": "ADGANGSKODE",
+    "verifying": "Verificerer...",
+    "submit": "Log ind",
+    "demoCustomer": "Kunde (Tilladt)",
+    "demoAgent": "OA Agent (Afvises)"
+  },
+  "profile": {
+    "editTitle": "Rediger Profil & Stamdata",
+    "fullName": "Fulde Navn",
+    "mobileNumber": "Mobilnummer",
+    "address": "Adresse",
+    "postalCode": "Postnr",
+    "city": "By",
+    "licensePlateCar": "Nummerplade (Bil)",
+    "cancel": "Annuller",
+    "save": "Gem",
+    "title": "Min Profil",
+    "loginHeading": "Log ind på din profil",
+    "loginIntro": "Gem dine stamdata, adresse og bilnummer, så din booking udfyldes automatisk.",
+    "loginOrCreate": "Log ind / Opret profil",
+    "demoLogin": "Demo: Log ind som Mads Jensen",
+    "loggedInTitle": "Min Profil & Personlige Data",
+    "memberNumber": "Medlemsnr: {number}",
+    "bonusPoints": "Opsparede bonuspoint: {points}",
+    "personalData": "Personlige Stamdata",
+    "name": "Navn",
+    "email": "E-mail",
+    "mobile": "Mobil",
+    "addressRow": "Adresse",
+    "nationality": "Nationalitet",
+    "passportNumber": "Pasnummer",
+    "birthDate": "Fødselsdato",
+    "savedVehicle": "Gemt Køretøj",
+    "licensePlate": "Nummerplade",
+    "vehicleType": "Køretøjstype",
+    "vehicleTypeCar": "Almindelig Personbil",
+    "fuel": "Drivmiddel",
+    "fuelElectric": "⚡ 100% Elektrisk (Elbil)",
+    "fuelCombustion": "Benzin/Diesel"
+  },
+  "destinationGuide": {
+    "title": "Oplev Ombord & Destinationer",
+    "bannerText": "2 nætter til søs og 5 timer til at udforske smukke Oslo",
+    "osloTitle": "Oslo Operahus & Fjordbyen",
+    "osloText": "Gå en tur på det ikoniske marmortag på Oslo Operaen og nyd udsigten over fjorden, Munch Museet og Barcode.",
+    "foodTitle": "Gastronomi & Skandinaviske Buffeter",
+    "foodText": "Vores dygtige kokke tryller med frisk fisk, saftigt kød, nordiske oste og lækre desserter i 7 Seas og Explorers Steakhouse.",
+    "shopTitle": "Tax-Free Sea Shop Ombord",
+    "shopText": "Shop parfume, kosmetik, skandinavisk slik, spiritus og mærkevarer med op til 20-40% rabat i forhold til landpriser.",
+    "skiTitle": "Skiferie i de Norske Fjelde",
+    "skiText": "Tag bilen med til Norefjell, Hemsedal, Hafjell eller Trysil. Nem og udhvilet ankomst i Oslo kl. 10:00.",
+    "bookNow": "Book MiniCruise Nu →"
+  },
+  "netsPayment": {
+    "title": "Betaling · {pnr}",
+    "cancelTooltip": "Afbryd betaling"
+  },
+  "widgets": {
+    "bookingCard": {
+      "checkedIn": "✓ TJEKKET IND",
+      "confirmed": "BEKRÆFTET",
+      "departure": "{date} kl. {time}",
+      "showBoardingPass": "Vis Boardingkort",
+      "checkIn": "Tjek Ind"
+    },
+    "cabinCard": {
+      "breakfastIncluded": "INKL. MORGENMAD",
+      "selected": "✓ Valgt",
+      "select": "Vælg kahyt"
+    },
+    "appBar": {
+      "badge": "PASSAGER"
+    },
+    "banner": {
+      "defaultBadge": "SPECIALTILBUD",
+      "defaultText": "Oplev Skiferie i Norge med Go Nordic Cruiseline • Spar 50% på kahyt"
+    },
+    "qr": {
+      "checkInRequired": "Check-in påkrævet",
+      "gateControl": "SOLAS GATE KONTROL: {code}"
+    }
+  }
+}

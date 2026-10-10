@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/booking_service.dart';
+import '../services/texts_service.dart';
 import '../theme/gonordic_theme.dart';
 import 'explore_screen.dart';
 import 'booking_wizard_screen.dart';
@@ -36,7 +37,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ? BoardingPassScreen(booking: activeBooking)
               : Scaffold(
                   backgroundColor: GoNordicTheme.sand,
-                  appBar: AppBar(title: const Text('Boardingkort')),
+                  appBar: AppBar(title: Text(tr('home.noPass.title'))),
                   body: Center(
                     child: Padding(
                       padding: const EdgeInsets.all(24),
@@ -48,15 +49,15 @@ class _HomeScreenState extends State<HomeScreen> {
                             children: [
                               const Icon(Icons.qr_code_2, size: 64, color: GoNordicTheme.teal),
                               const SizedBox(height: 12),
-                              const Text(
-                                'Intet aktivt boardingkort fundet',
-                                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                              Text(
+                                tr('home.noPass.heading'),
+                                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                                 textAlign: TextAlign.center,
                               ),
                               const SizedBox(height: 8),
-                              const Text(
-                                'Søg din eksisterende reservation frem under Mine Bookinger, eller gennemfør en ny booking for at se dit QR boardingkort.',
-                                style: TextStyle(fontSize: 12, color: GoNordicTheme.textSecondary),
+                              Text(
+                                tr('home.noPass.body'),
+                                style: const TextStyle(fontSize: 12, color: GoNordicTheme.textSecondary),
                                 textAlign: TextAlign.center,
                               ),
                               const SizedBox(height: 20),
@@ -65,7 +66,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 child: ElevatedButton.icon(
                                   onPressed: () => setState(() => _currentIndex = 2),
                                   icon: const Icon(Icons.search),
-                                  label: const Text('Find Eksisterende Booking'),
+                                  label: Text(tr('home.noPass.findBooking')),
                                 ),
                               ),
                               const SizedBox(height: 10),
@@ -74,7 +75,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 child: OutlinedButton.icon(
                                   onPressed: () => setState(() => _currentIndex = 1),
                                   icon: const Icon(Icons.sailing),
-                                  label: const Text('Book Ny Rejse'),
+                                  label: Text(tr('home.noPass.bookNew')),
                                 ),
                               ),
                             ],
@@ -100,26 +101,26 @@ class _HomeScreenState extends State<HomeScreen> {
             type: BottomNavigationBarType.fixed,
             selectedFontSize: 11,
             unselectedFontSize: 11,
-            items: const [
+            items: [
               BottomNavigationBarItem(
-                icon: Icon(Icons.explore),
-                label: 'Udforsk',
+                icon: const Icon(Icons.explore),
+                label: tr('home.nav.explore'),
               ),
               BottomNavigationBarItem(
-                icon: Icon(Icons.sailing),
-                label: 'Book Rejse',
+                icon: const Icon(Icons.sailing),
+                label: tr('home.nav.book'),
               ),
               BottomNavigationBarItem(
-                icon: Icon(Icons.confirmation_number),
-                label: 'Mine Bookinger',
+                icon: const Icon(Icons.confirmation_number),
+                label: tr('home.nav.myBookings'),
               ),
               BottomNavigationBarItem(
-                icon: Icon(Icons.qr_code_2),
-                label: 'Boardingkort',
+                icon: const Icon(Icons.qr_code_2),
+                label: tr('home.nav.boardingPass'),
               ),
               BottomNavigationBarItem(
-                icon: Icon(Icons.person),
-                label: 'Min Profil',
+                icon: const Icon(Icons.person),
+                label: tr('home.nav.profile'),
               ),
             ],
           ),

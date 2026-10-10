@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 import '../theme/gonordic_theme.dart';
+import '../services/texts_service.dart';
 
 class GoNordicBanner extends StatelessWidget {
-  final String text;
-  final String badgeText;
+  // Uden tekst bruges standardtilbuddet fra sprogfilen
+  final String? text;
+  final String? badgeText;
 
   const GoNordicBanner({
     super.key,
-    this.text = 'Oplev Skiferie i Norge med Go Nordic Cruiseline • Spar 50% på kahyt',
-    this.badgeText = 'SPECIALTILBUD',
+    this.text,
+    this.badgeText,
   });
 
   @override
@@ -30,7 +32,7 @@ class GoNordicBanner extends StatelessWidget {
               borderRadius: BorderRadius.circular(10),
             ),
             child: Text(
-              badgeText,
+              badgeText ?? tr('widgets.banner.defaultBadge'),
               style: const TextStyle(
                 color: GoNordicTheme.pineDark,
                 fontSize: 9,
@@ -42,7 +44,7 @@ class GoNordicBanner extends StatelessWidget {
           const SizedBox(width: 8),
           Flexible(
             child: Text(
-              text,
+              text ?? tr('widgets.banner.defaultText'),
               style: const TextStyle(
                 color: Colors.white,
                 fontSize: 11,
