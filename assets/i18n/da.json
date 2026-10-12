@@ -91,7 +91,16 @@
       "email": "E-MAIL",
       "mobile": "MOBILNUMMER",
       "total": "Total: {amount} DKK",
-      "continueToPayment": "Fortsæt til Betaling via Nets →"
+      "continueToPayment": "Fortsæt til Betaling via Nets →",
+      "travellerTitle": "Rejsende",
+      "birthDate": "FØDSELSDATO",
+      "choose": "Vælg",
+      "gender": "KØN",
+      "genderFemale": "Kvinde",
+      "genderMale": "Mand",
+      "genderOther": "Andet",
+      "nationality": "NATIONALITET",
+      "manifestNote": "Køn, nationalitet og fødselsdato indberettes til myndighederne for rejser over 20 sømil (EU-krav)."
     },
     "step5": {
       "title": "Booking Gennemført!",
@@ -111,7 +120,8 @@
       "verifying": "Verificerer hos Nets & Core...",
       "pay": "Betal med kort eller MobilePay",
       "cancel": "Annuller betaling"
-    }
+    },
+    "missingPassengerDetails": "Udfyld fødselsdato, køn og nationalitet – rederiet skal indberette dem til myndighederne."
   },
   "myBookings": {
     "missingFields": "Indtast venligst både bookingnummer (PNR) og e-mail/efternavn.",
@@ -250,5 +260,19 @@
       "checkInRequired": "Check-in påkrævet",
       "gateControl": "SOLAS GATE KONTROL: {code}"
     }
+  },
+  "countries": {
+    "DK": "Danmark",
+    "NO": "Norge",
+    "SE": "Sverige",
+    "DE": "Tyskland",
+    "FI": "Finland",
+    "NL": "Nederlandene",
+    "PL": "Polen",
+    "GB": "Storbritannien",
+    "US": "USA",
+    "FR": "Frankrig",
+    "ES": "Spanien",
+    "IT": "Italien"
   }
 }

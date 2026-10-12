@@ -46,6 +46,12 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
   late final TextEditingController _phoneCtrl;
   BookingModel? _booked;
 
+  // Passagerlisten (EU-direktiv 98/41/EF): køn, nationalitet og fødselsdato indberettes for rejser over 20 sømil
+  String? _gender;
+  String? _nationality;
+  String? _birthDate;
+  static const _countries = ['DK', 'NO', 'SE', 'DE', 'FI', 'NL', 'PL', 'GB', 'US', 'FR', 'ES', 'IT'];
+
   @override
   void initState() {
     super.initState();
@@ -57,6 +63,8 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
     _nameCtrl = TextEditingController(text: u?.fullName ?? 'Mads Jensen');
     _emailCtrl = TextEditingController(text: u?.email ?? 'mads.jensen@example.dk');
     _phoneCtrl = TextEditingController(text: u?.phone ?? '+45 20 30 40 50');
+    _nationality = u?.nationality;
+    _birthDate = u?.birthDate;
   }
 
   void _useProfileData() {
@@ -66,6 +74,8 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
         _nameCtrl.text = u.fullName;
         _emailCtrl.text = u.email;
         _phoneCtrl.text = u.phone;
+        _nationality = u.nationality;
+        _birthDate = u.birthDate;
       });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(backgroundColor: GoNordicTheme.success, content: Text(tr('bookingWizard.profileFilled', {'name': u.fullName}))),
@@ -122,7 +132,6 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
   }
 
   Future<Map<String, dynamic>> _buildDraft(DepartureModel dep, {required String firstName, required String lastName, required String name, required String email, required String phone}) async {
-    final user = AuthService().currentUser;
     final cabinId = await _resolveCabinId(dep);
     return {
       'termsAccepted': true,
@@ -136,8 +145,10 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
           'firstName': firstName,
           'lastName': lastName,
           'type': 'ADULT',
-          'nationality': user?.nationality ?? 'DK',
-          'dateOfBirth': user?.birthDate ?? '1988-01-01',
+          // Kun det, passageren selv har oplyst – ingen standardværdier på passagerlisten
+          'nationality': ?_nationality,
+          'dateOfBirth': ?_birthDate,
+          'gender': ?_gender,
         }
       ],
       'leadContact': {
@@ -160,6 +171,12 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
     if (name.isEmpty || email.isEmpty || phone.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(tr('bookingWizard.missingContact'))),
+      );
+      return;
+    }
+    if (_gender == null || _nationality == null || _birthDate == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(tr('bookingWizard.missingPassengerDetails'))),
       );
       return;
     }
@@ -422,6 +439,58 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
                 TextField(controller: _emailCtrl, decoration: InputDecoration(labelText: tr('bookingWizard.step4.email'))),
                 const SizedBox(height: 8),
                 TextField(controller: _phoneCtrl, decoration: InputDecoration(labelText: tr('bookingWizard.step4.mobile'))),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(tr('bookingWizard.step4.travellerTitle'), style: const TextStyle(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                InkWell(
+                  key: const Key('wizard-birthdate'),
+                  onTap: () async {
+                    final now = DateTime.now();
+                    final picked = await showDatePicker(
+                      context: context,
+                      initialDate: _birthDate != null ? DateTime.tryParse(_birthDate!) ?? DateTime(now.year - 30) : DateTime(now.year - 30),
+                      firstDate: DateTime(1900),
+                      lastDate: now,
+                    );
+                    if (picked != null) setState(() => _birthDate = picked.toIso8601String().split('T').first);
+                  },
+                  child: InputDecorator(
+                    decoration: InputDecoration(labelText: tr('bookingWizard.step4.birthDate')),
+                    child: Text(_birthDate ?? tr('bookingWizard.step4.choose')),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                DropdownButtonFormField<String>(
+                  key: const Key('wizard-gender'),
+                  initialValue: _gender,
+                  decoration: InputDecoration(labelText: tr('bookingWizard.step4.gender')),
+                  items: [
+                    DropdownMenuItem(value: 'FEMALE', child: Text(tr('bookingWizard.step4.genderFemale'))),
+                    DropdownMenuItem(value: 'MALE', child: Text(tr('bookingWizard.step4.genderMale'))),
+                    DropdownMenuItem(value: 'OTHER', child: Text(tr('bookingWizard.step4.genderOther'))),
+                  ],
+                  onChanged: (v) => setState(() => _gender = v),
+                ),
+                const SizedBox(height: 8),
+                DropdownButtonFormField<String>(
+                  key: const Key('wizard-nationality'),
+                  initialValue: _countries.contains(_nationality) ? _nationality : null,
+                  decoration: InputDecoration(labelText: tr('bookingWizard.step4.nationality')),
+                  items: _countries.map((c) => DropdownMenuItem(value: c, child: Text(tr('countries.$c')))).toList(),
+                  onChanged: (v) => setState(() => _nationality = v),
+                ),
+                const SizedBox(height: 6),
+                Text(tr('bookingWizard.step4.manifestNote'), style: const TextStyle(fontSize: 11, color: Colors.black54)),
               ],
             ),
           ),
