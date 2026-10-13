@@ -109,14 +109,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       child: Text(tr('profile.loginOrCreate')),
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  OutlinedButton(
-                    onPressed: () {
-                      auth.loginAsDemoCustomer();
-                      setState(() {});
-                    },
-                    child: Text(tr('profile.demoLogin')),
-                  ),
                 ],
               ),
             ),
@@ -151,18 +143,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Image.asset('assets/gonordic/logo_white.png', height: 16, fit: BoxFit.contain, errorBuilder: (c, e, s) => const Text('GO NORDIC CLUB', style: TextStyle(color: GoNordicTheme.lime, fontWeight: FontWeight.w900, fontSize: 12))),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(10)),
-                      child: Text(user.clubTier.toUpperCase(), style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold)),
-                    ),
+                    if (user.clubTier.isNotEmpty)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(10)),
+                        child: Text(user.clubTier.toUpperCase(), style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold)),
+                      ),
                   ],
                 ),
                 const SizedBox(height: 12),
                 Text(user.fullName, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-                Text(tr('profile.memberNumber', {'number': user.clubMemberNumber}), style: const TextStyle(color: Colors.white70, fontSize: 11)),
-                const SizedBox(height: 8),
-                Text(tr('profile.bonusPoints', {'points': user.clubPoints}), style: const TextStyle(color: GoNordicTheme.lime, fontWeight: FontWeight.bold, fontSize: 13)),
+                // Klubdata vises kun, når Core har sendt et medlemsnummer
+                if (user.clubMemberNumber.isNotEmpty) ...[
+                  Text(tr('profile.memberNumber', {'number': user.clubMemberNumber}), style: const TextStyle(color: Colors.white70, fontSize: 11)),
+                  const SizedBox(height: 8),
+                  Text(tr('profile.bonusPoints', {'points': user.clubPoints}), style: const TextStyle(color: GoNordicTheme.lime, fontWeight: FontWeight.bold, fontSize: 13)),
+                ],
               ],
             ),
           ),
@@ -184,7 +180,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   _row(tr('profile.name'), user.fullName),
                   _row(tr('profile.email'), user.email),
                   _row(tr('profile.mobile'), user.phone),
-                  _row(tr('profile.addressRow'), '${user.address}, ${user.postalCode} ${user.city}'),
+                  _row(tr('profile.addressRow'), [user.address, '${user.postalCode} ${user.city}'.trim()].where((p) => p.isNotEmpty).join(', ')),
                   _row(tr('profile.nationality'), user.nationality),
                   _row(tr('profile.passportNumber'), user.passportNumber),
                   _row(tr('profile.birthDate'), user.birthDate),
@@ -203,7 +199,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   const Divider(),
                   _row(tr('profile.licensePlate'), user.savedVehiclePlate),
                   _row(tr('profile.vehicleType'), tr('profile.vehicleTypeCar')),
-                  _row(tr('profile.fuel'), user.isElectricVehicle ? tr('profile.fuelElectric') : tr('profile.fuelCombustion')),
+                  if (user.savedVehiclePlate.isNotEmpty)
+                    _row(tr('profile.fuel'), user.isElectricVehicle ? tr('profile.fuelElectric') : tr('profile.fuelCombustion')),
                 ],
               ),
             ),
@@ -220,7 +217,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(width: 95, child: Text(label, style: const TextStyle(fontSize: 11, color: GoNordicTheme.textSecondary, fontWeight: FontWeight.bold))),
-          Expanded(child: Text(value, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700))),
+          Expanded(child: Text(value.isEmpty ? '–' : value, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700))),
         ],
       ),
     );

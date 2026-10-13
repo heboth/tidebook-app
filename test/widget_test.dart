@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 import 'package:tidebook_app/main.dart';
 import 'package:tidebook_app/services/auth_service.dart';
 import 'package:tidebook_app/services/booking_service.dart';
@@ -15,7 +17,12 @@ void main() {
     TestWidgetsFlutterBinding.ensureInitialized();
     final json = jsonDecode(File('assets/i18n/da.json').readAsStringSync()) as Map<String, dynamic>;
     TextsService.instance.load(json);
+    // Ingen Core i testene: alle kald svarer som en utilgængelig server
+    ApiService.client = MockClient((_) async => throw const SocketException('Core er ikke startet i testen'));
+    BookingService().resetForTest();
   });
+
+  tearDown(() => AuthService().logout());
 
   testWidgets('Tidebook passenger app loads with bottom navigation', (WidgetTester tester) async {
     await tester.pumpWidget(const TidebookApp());
@@ -29,25 +36,39 @@ void main() {
   });
 
   group('Authentication & Authorization Tests', () {
-    test('Customer can login successfully', () async {
+    test('Kundelogin går via Core (portal-login) og bruger Core\'s navn', () async {
+      ApiService.client = MockClient((req) async {
+        expect(req.url.path, '/api/auth/portal-login');
+        expect(jsonDecode(req.body)['isAgent'], false);
+        return http.Response(
+          jsonEncode({
+            'IsLoggedIn': true,
+            'token': 'PORTAL-TOKEN',
+            'expiresInSeconds': 3600,
+            'user': {'id': 'USR-CUST-01', 'username': 'kunde', 'email': 'kunde@example.dk', 'fullName': 'Kunde Test', 'role': 'Person'},
+          }),
+          200,
+        );
+      });
       final auth = AuthService();
-      final res = await auth.loginCustomer(
-        usernameOrEmail: 'kunde',
-        password: 'Kunde2026!',
-      );
+      final res = await auth.loginCustomer(usernameOrEmail: 'kunde', password: 'Kunde2026!');
       expect(res.success, isTrue);
-      expect(res.user?.fullName, 'Mads Jensen');
+      expect(res.user?.fullName, 'Kunde Test');
+      expect(auth.portalToken, 'PORTAL-TOKEN');
+      ApiService.client = MockClient((_) async => throw const SocketException('offline'));
     });
 
-    test('Customer profile contains personal data and can be updated', () {
-      final auth = AuthService();
-      auth.loginAsDemoCustomer();
-      final user = auth.currentUser!;
-      expect(user.fullName, 'Mads Jensen');
-      expect(user.phone, '+45 20 30 40 50');
-      expect(user.savedVehiclePlate, 'CP 48 921');
-      expect(user.address, contains('Dampfærgevej'));
+    test('Profilen har ingen opfundne stamdata og kan opdateres', () {
+      final user = AuthService.userFromCore({'id': 'USR-1', 'username': 'kunde', 'email': 'kunde@example.dk'}, 'kunde');
+      // Uden navn fra Core bruges e-mailen – ingen "Mads Jensen"
+      expect(user.fullName, 'kunde@example.dk');
+      expect(user.phone, isEmpty);
+      expect(user.savedVehiclePlate, isEmpty);
+      expect(user.passportNumber, isEmpty);
+      expect(user.clubTier, isEmpty);
 
+      final auth = AuthService();
+      auth.updateProfile(user);
       final updated = user.copyWith(phone: '+45 99 88 77 66', savedVehiclePlate: 'DK 12 345');
       auth.updateProfile(updated);
       expect(auth.currentUser?.phone, '+45 99 88 77 66');
@@ -76,25 +97,13 @@ void main() {
   });
 
   group('Booking & Boarding Pass Tests', () {
-    test('Can lookup customer booking by PNR and email', () async {
-      final service = BookingService();
-      final res = await service.lookupBooking(pnr: 'TIDE-9021', emailOrLastName: 'mads.jensen@example.dk');
-      expect(res.success, isTrue);
-      expect(res.booking?.pnr, 'TIDE-9021');
+    test('Gruppe-PNR afvises (reserveregel uden kanal fra Core)', () {
+      expect(BookingService.pnrPrefixDenial('TB-GRP-9020'), contains('Gruppe-reservationer'));
     });
 
-    test('Group booking PNR is rejected in passenger app', () async {
-      final service = BookingService();
-      final res = await service.lookupBooking(pnr: 'TB-GRP-9020', emailOrLastName: 'leder@skole.dk');
-      expect(res.success, isFalse);
-      expect(res.errorMessage, contains('Gruppe-reservationer'));
-    });
-
-    test('OA / Agent booking PNR is rejected in passenger app', () async {
-      final service = BookingService();
-      final res = await service.lookupBooking(pnr: 'FG-DF-10928', emailOrLastName: 'agent@bureau.dk');
-      expect(res.success, isFalse);
-      expect(res.errorMessage, contains('Online Agentur (OA)'));
+    test('OA/agent-PNR afvises (reserveregel uden kanal fra Core)', () {
+      expect(BookingService.pnrPrefixDenial('FG-DF-10928'), contains('Online Agentur (OA)'));
+      expect(BookingService.pnrPrefixDenial('TB-123456'), isNull);
     });
 
     test('Backend API health and TideRMS connectivity', () async {
@@ -123,6 +132,8 @@ void main() {
     });
 
     test('ApiService supports configurable API base URL and does not rely on hardcoded localhost:4000', () {
+      // Debug/test: localhost er kun standard uden for release
+      expect(ApiService.isConfigured(releaseMode: false), isTrue);
       ApiService.setBaseUrl('http://api.gonordic.dk:8080');
       expect(ApiService.baseUrl, 'http://api.gonordic.dk:8080/api');
       expect(ApiService.healthUrl, 'http://api.gonordic.dk:8080/health');

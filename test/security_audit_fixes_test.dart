@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/testing.dart';
 import 'package:tidebook_app/models/booking_model.dart';
 import 'package:tidebook_app/models/passenger_model.dart';
 import 'package:tidebook_app/models/user_model.dart';
@@ -8,6 +11,13 @@ import 'package:tidebook_app/services/booking_service.dart';
 import 'package:tidebook_app/services/qr_security_service.dart';
 
 void main() {
+  // Testene kører uden Core: alle kald svarer som en utilgængelig server
+  setUp(() {
+    ApiService.client = MockClient((_) async => throw const SocketException('Core er ikke startet i testen'));
+    BookingService().resetForTest();
+  });
+  tearDown(() => AuthService().logout());
+
   group('Security Review Fixes (Audit Findings 1 to 5)', () {
     test('Finding 1: Nets betalingsflow benyttes - bookinger oprettes ikke med umiddelbar PAID uden om Nets', () {
       const sessionJson = {
@@ -164,12 +174,11 @@ void main() {
       expect(grpRes.success, isFalse);
       expect(grpRes.errorMessage, contains('Gruppeleder-login er ikke tilladt'));
 
-      // Gyldigt kundelogin godkendes (demo / offline fallback)
+      // Uden Core er der intet login – heller ikke med Core's testkonto (ingen offline-fallback)
       final custRes = await auth.loginCustomer(usernameOrEmail: 'kunde', password: 'Kunde2026!');
-      expect(custRes.success, isTrue);
-      expect(custRes.user?.role, UserRole.person);
-      // Navnet kommer fra Core, når den kører (ellers fra demo-data) – det vigtige er rollen
-      expect(custRes.user?.fullName, isNotEmpty);
+      expect(custRes.success, isFalse);
+      expect(auth.currentUser, isNull);
+      expect(AuthService.userFromCore({'id': 'U1', 'fullName': 'Kunde Test'}, 'kunde').role, UserRole.person);
     });
 
   });

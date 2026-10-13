@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import '../services/api_service.dart';
 import '../services/auth_service.dart';
+import '../services/booking_service.dart';
 import '../services/texts_service.dart';
+import '../models/user_model.dart';
 import '../theme/gonordic_theme.dart';
 import '../widgets/gonordic_banner.dart';
 import 'booking_wizard_screen.dart';
@@ -17,12 +20,80 @@ class ExploreScreen extends StatefulWidget {
 }
 
 class _ExploreScreenState extends State<ExploreScreen> {
-  String _routeId = 'ROUTE-CPH-OSL';
+  /// Valgt rute – ruterne kommer fra Core (/api/routes)
+  String? _routeId;
   String _tripType = 'CRUISE';
   DateTime _date = DateTime.now().add(const Duration(days: 1));
   int _adults = 2;
   int _children = 0;
   bool _hasVehicle = true;
+
+  /// Laveste pris pr. dag fra Core (/api/pricing/lowest, TideRMS-priser) for de næste 14 dage
+  Map<String, double?>? _lowestPrices;
+  bool _pricesLoading = false;
+  bool _pricesFailed = false;
+  String? _pricesRouteId;
+
+  @override
+  void initState() {
+    super.initState();
+    BookingService().addListener(_onRoutesChanged);
+    _onRoutesChanged();
+  }
+
+  @override
+  void dispose() {
+    BookingService().removeListener(_onRoutesChanged);
+    super.dispose();
+  }
+
+  void _onRoutesChanged() {
+    if (!mounted) return;
+    final routes = BookingService().routes;
+    if (routes.isEmpty) {
+      setState(() {});
+      return;
+    }
+    if (_routeId == null || !routes.any((r) => r.id == _routeId)) {
+      _routeId = routes.first.id;
+    }
+    if (_pricesRouteId != _routeId) _loadPrices();
+    setState(() {});
+  }
+
+  /// Skifter til næste rute fra Core
+  void _nextRoute() {
+    final routes = BookingService().routes;
+    if (routes.length < 2) return;
+    final i = routes.indexWhere((r) => r.id == _routeId);
+    setState(() => _routeId = routes[(i + 1) % routes.length].id);
+    _loadPrices();
+  }
+
+  static String _iso(DateTime d) => '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+
+  Future<void> _loadPrices() async {
+    final routeId = _routeId;
+    if (routeId == null) return;
+    _pricesRouteId = routeId;
+    setState(() {
+      _pricesLoading = true;
+      _pricesFailed = false;
+      _lowestPrices = null;
+    });
+    final now = DateTime.now();
+    final prices = await ApiService().fetchLowestPrices(
+      routeId: routeId,
+      from: _iso(now.add(const Duration(days: 1))),
+      to: _iso(now.add(const Duration(days: 14))),
+    );
+    if (!mounted || routeId != _routeId) return;
+    setState(() {
+      _pricesLoading = false;
+      _pricesFailed = prices == null;
+      _lowestPrices = prices;
+    });
+  }
 
   void _showPassengerModal() {
     showModalBottomSheet(
@@ -215,7 +286,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
     );
   }
 
-  Widget _buildProfileBar(dynamic user) {
+  Widget _buildProfileBar(UserModel? user) {
     if (user != null) {
       return Container(
         margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
@@ -233,8 +304,14 @@ class _ExploreScreenState extends State<ExploreScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(tr('explore.profileBar.greeting', {'name': user.fullName, 'tier': user.clubTier}), style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: GoNordicTheme.pine)),
-                  Text(tr('explore.profileBar.ready', {'plate': user.savedVehiclePlate}), style: const TextStyle(fontSize: 11, color: Color(0xFF1E6460))),
+                  Text(
+                    user.clubTier.isNotEmpty
+                        ? tr('explore.profileBar.greeting', {'name': user.fullName, 'tier': user.clubTier})
+                        : tr('explore.profileBar.greetingNoTier', {'name': user.fullName}),
+                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: GoNordicTheme.pine),
+                  ),
+                  if (user.savedVehiclePlate.isNotEmpty)
+                    Text(tr('explore.profileBar.ready', {'plate': user.savedVehiclePlate}), style: const TextStyle(fontSize: 11, color: Color(0xFF1E6460))),
                 ],
               ),
             ),
@@ -294,27 +371,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
               ],
             ),
             const Divider(height: 20),
-            InkWell(
-              onTap: () {
-                setState(() {
-                  _routeId = _routeId == 'ROUTE-CPH-OSL' ? 'ROUTE-OSL-CPH' : 'ROUTE-CPH-OSL';
-                });
-              },
-              child: Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(color: GoNordicTheme.sandLight, borderRadius: BorderRadius.circular(10)),
-                child: Row(
-                  children: [
-                    const Icon(Icons.directions_boat, color: GoNordicTheme.pine, size: 18),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(_routeId == 'ROUTE-CPH-OSL' ? tr('explore.search.routeCphOsl') : tr('explore.search.routeOslCph'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                    ),
-                    const Icon(Icons.swap_horiz, color: GoNordicTheme.teal),
-                  ],
-                ),
-              ),
-            ),
+            _buildRouteSelector(),
             const SizedBox(height: 10),
             Row(
               children: [
@@ -405,6 +462,50 @@ class _ExploreScreenState extends State<ExploreScreen> {
     );
   }
 
+  /// Rutevælger med Core's ruter; har Core flere, skiftes der med et tryk.
+  Widget _buildRouteSelector() {
+    final service = BookingService();
+    final routes = service.routes;
+    final route = routes.where((r) => r.id == _routeId).firstOrNull;
+    if (route == null) {
+      return Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(color: GoNordicTheme.sandLight, borderRadius: BorderRadius.circular(10)),
+        child: Row(
+          children: [
+            const Icon(Icons.directions_boat, color: GoNordicTheme.pine, size: 18),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                service.routesLoading ? tr('explore.routesLoading') : tr('explore.routesUnavailable'),
+                style: TextStyle(fontSize: 12, color: service.routesLoading ? GoNordicTheme.textSecondary : GoNordicTheme.error, fontWeight: FontWeight.bold),
+              ),
+            ),
+            if (!service.routesLoading)
+              TextButton(onPressed: () => service.syncBackend(), child: Text(tr('explore.retry'))),
+          ],
+        ),
+      );
+    }
+    return InkWell(
+      onTap: routes.length > 1 ? _nextRoute : null,
+      child: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(color: GoNordicTheme.sandLight, borderRadius: BorderRadius.circular(10)),
+        child: Row(
+          children: [
+            const Icon(Icons.directions_boat, color: GoNordicTheme.pine, size: 18),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(route.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+            ),
+            if (routes.length > 1) const Icon(Icons.swap_horiz, color: GoNordicTheme.teal),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _tab(String title, String type) {
     final active = _tripType == type;
     return InkWell(
@@ -420,8 +521,14 @@ class _ExploreScreenState extends State<ExploreScreen> {
     );
   }
 
+  /// Dagens laveste pris fra Core; uden pris (udsolgt, ingen afgang eller fejl) vises en streg
+  String _priceFor(DateTime d) {
+    final price = _lowestPrices?[_iso(d)];
+    return price == null ? tr('explore.noPrice') : tr('explore.price', {'amount': price.round()});
+  }
+
   Widget _buildPriceStrip() {
-    final priceStr = _tripType == 'ONEWAY' ? '590,-' : '890,-';
+    if (_routeId == null) return const SizedBox.shrink();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -429,6 +536,16 @@ class _ExploreScreenState extends State<ExploreScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 18),
           child: Text(tr('explore.priceCalendar'), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: GoNordicTheme.textSecondary)),
         ),
+        if (_pricesFailed)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 18),
+            child: Row(
+              children: [
+                Expanded(child: Text(tr('explore.priceUnavailable'), style: const TextStyle(fontSize: 11, color: GoNordicTheme.error, fontWeight: FontWeight.bold))),
+                TextButton(onPressed: _loadPrices, child: Text(tr('explore.retry'))),
+              ],
+            ),
+          ),
         const SizedBox(height: 6),
         SizedBox(
           height: 64,
@@ -458,7 +575,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text('${d.day}/${d.month}', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: isSelected ? Colors.white : GoNordicTheme.textPrimary)),
-                          Text(priceStr, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: isSelected ? GoNordicTheme.lime : GoNordicTheme.pine)),
+                          _pricesLoading
+                              ? const SizedBox(width: 12, height: 12, child: CircularProgressIndicator(strokeWidth: 1.5))
+                              : Text(_priceFor(d), style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: isSelected ? GoNordicTheme.lime : GoNordicTheme.pine)),
                         ],
                       ),
                     ),

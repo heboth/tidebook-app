@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import '../services/texts_service.dart';
@@ -11,8 +12,8 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _userController = TextEditingController(text: 'kunde');
-  final _passController = TextEditingController(text: 'Kunde2026!');
+  final _userController = TextEditingController();
+  final _passController = TextEditingController();
   String? _error;
   bool _loading = false;
 
@@ -27,9 +28,9 @@ class _LoginScreenState extends State<LoginScreen> {
       password: _passController.text,
     );
 
+    if (!mounted) return;
     setState(() => _loading = false);
 
-    if (!mounted) return;
     if (!res.success) {
       setState(() => _error = res.errorMessage);
     } else {
@@ -132,14 +133,18 @@ class _LoginScreenState extends State<LoginScreen> {
                     ],
                     const SizedBox(height: 14),
                     SizedBox(width: double.infinity, child: ElevatedButton(onPressed: _loading ? null : _login, child: Text(_loading ? tr('login.verifying') : tr('login.submit')))),
-                    const SizedBox(height: 10),
-                    Wrap(
-                      spacing: 8,
-                      children: [
-                        ActionChip(label: Text(tr('login.demoCustomer')), onPressed: () { _userController.text = 'kunde'; _passController.text = 'Kunde2026!'; }),
-                        ActionChip(label: Text(tr('login.demoAgent')), onPressed: () { _userController.text = 'rejseagent'; _passController.text = 'Agent2026!'; }),
-                      ],
-                    ),
+                    // Kun i debug-builds: udfylder formularen med Core's lokale testkonti.
+                    // Login går stadig via Core – knapperne logger ikke selv ind.
+                    if (kDebugMode) ...[
+                      const SizedBox(height: 10),
+                      Wrap(
+                        spacing: 8,
+                        children: [
+                          ActionChip(label: Text(tr('login.demoCustomer')), onPressed: () { _userController.text = 'kunde'; _passController.text = 'Kunde2026!'; }),
+                          ActionChip(label: Text(tr('login.demoAgent')), onPressed: () { _userController.text = 'rejseagent'; _passController.text = 'Agent2026!'; }),
+                        ],
+                      ),
+                    ],
                   ],
                 ),
               ),

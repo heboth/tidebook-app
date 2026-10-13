@@ -38,13 +38,29 @@ class BookingWizardScreen extends StatefulWidget {
 
 class _BookingWizardScreenState extends State<BookingWizardScreen> {
   int _step = 1;
-  late String _routeId;
-  CabinModel? _cabin;
+  String? _routeId;
   final Map<String, int> _addons = {};
   late final TextEditingController _nameCtrl;
   late final TextEditingController _emailCtrl;
   late final TextEditingController _phoneCtrl;
   BookingModel? _booked;
+
+  // Afgang – hentes fra Core for den valgte rute (og evt. dato fra søgningen)
+  DepartureModel? _departure;
+  bool _departuresLoading = false;
+  bool _departuresFailed = false;
+  bool _departuresTried = false;
+
+  // Kahytskategorier på afgangen – fra Core (/api/departures/:id/cabins)
+  List<CabinModel>? _cabins;
+  CabinModel? _cabin;
+  bool _cabinsLoading = false;
+  bool _cabinsFailed = false;
+
+  // Tilvalg – fra Core (/api/addons)
+  List<AddOnModel>? _addOnCatalog;
+  bool _addOnsLoading = false;
+  bool _addOnsFailed = false;
 
   // Passagerlisten (EU-direktiv 98/41/EF): køn, nationalitet og fødselsdato indberettes for rejser over 20 sømil
   String? _gender;
@@ -55,16 +71,133 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
   @override
   void initState() {
     super.initState();
-    _routeId = widget.initialRouteId ?? 'ROUTE-CPH-OSL';
-    if (CabinModel.defaultCabins.isNotEmpty) {
-      _cabin = CabinModel.defaultCabins.first;
-    }
+    _routeId = widget.initialRouteId;
     final u = AuthService().currentUser;
-    _nameCtrl = TextEditingController(text: u?.fullName ?? 'Mads Jensen');
-    _emailCtrl = TextEditingController(text: u?.email ?? 'mads.jensen@example.dk');
-    _phoneCtrl = TextEditingController(text: u?.phone ?? '+45 20 30 40 50');
-    _nationality = u?.nationality;
-    _birthDate = u?.birthDate;
+    // Kun kundens egne data – ingen eksempelnavne i felterne
+    _nameCtrl = TextEditingController(text: u?.fullName ?? '');
+    _emailCtrl = TextEditingController(text: u?.email ?? '');
+    _phoneCtrl = TextEditingController(text: u?.phone ?? '');
+    _nationality = (u?.nationality.isNotEmpty ?? false) ? u!.nationality : null;
+    _birthDate = (u?.birthDate.isNotEmpty ?? false) ? u!.birthDate : null;
+    BookingService().addListener(_onRoutesChanged);
+    _onRoutesChanged();
+  }
+
+  @override
+  void dispose() {
+    BookingService().removeListener(_onRoutesChanged);
+    _nameCtrl.dispose();
+    _emailCtrl.dispose();
+    _phoneCtrl.dispose();
+    super.dispose();
+  }
+
+  /// Ruterne kommer fra Core (evt. efter appen er startet): vælg den første, hvis ingen er valgt.
+  void _onRoutesChanged() {
+    if (!mounted) return;
+    final routes = BookingService().routes;
+    if (_routeId == null && routes.isNotEmpty) {
+      _selectRoute(routes.first.id);
+    } else if (_routeId != null && !_departuresTried && !_departuresLoading) {
+      _loadDepartures();
+    } else {
+      setState(() {});
+    }
+  }
+
+  void _selectRoute(String routeId) {
+    setState(() {
+      _routeId = routeId;
+      _departure = null;
+      _departuresTried = false;
+      _cabins = null;
+      _cabin = null;
+      _serverTotal = null;
+      _quoteFailed = false;
+    });
+    _loadDepartures();
+  }
+
+  String _isoDate(DateTime d) => '${d.year}-${_two(d.month)}-${_two(d.day)}';
+
+  /// Næste afgang på ruten fra Core, der ikke er sejlet (mindst 30 min. til afgang).
+  /// Findes ingen, vises en tom tilstand – der opfindes ingen afgang.
+  Future<void> _loadDepartures() async {
+    final routeId = _routeId;
+    if (routeId == null) return;
+    setState(() {
+      _departuresLoading = true;
+      _departuresFailed = false;
+      _departuresTried = true;
+    });
+    final cutoff = DateTime.now().add(const Duration(minutes: 30));
+    final now = DateTime.now();
+    // Med en dato fra søgningen bruges den; ellers kendte afgange, så i dag og i morgen (Core opretter dagens afgange ved forespørgsel)
+    final attempts = widget.initialDate != null
+        ? <String?>[_isoDate(widget.initialDate!)]
+        : <String?>[null, _isoDate(now), _isoDate(now.add(const Duration(days: 1)))];
+    DepartureModel? next;
+    var failed = false;
+    for (final date in attempts) {
+      final list = await ApiService().fetchDepartures(routeId: routeId, date: date);
+      if (list == null) {
+        failed = true;
+        break;
+      }
+      final upcoming = list.where((d) => d.routeId == routeId && d.scheduledDepartureTime.isAfter(cutoff)).toList()
+        ..sort((a, b) => a.scheduledDepartureTime.compareTo(b.scheduledDepartureTime));
+      if (upcoming.isNotEmpty) {
+        next = upcoming.first;
+        break;
+      }
+    }
+    if (!mounted || routeId != _routeId) return;
+    setState(() {
+      _departuresLoading = false;
+      _departuresFailed = failed && next == null;
+      _departure = next;
+    });
+  }
+
+  /// Ledige kahytter på afgangen, samlet pr. kategori.
+  Future<void> _loadCabins() async {
+    final dep = _departure;
+    if (dep == null) return;
+    setState(() {
+      _cabinsLoading = true;
+      _cabinsFailed = false;
+    });
+    final raw = await ApiService().fetchDepartureCabins(dep.id);
+    if (!mounted || dep.id != _departure?.id) return;
+    setState(() {
+      _cabinsLoading = false;
+      _cabinsFailed = raw == null;
+      _cabins = raw == null ? null : CabinModel.fromCoreCabins(raw);
+      // Er den valgte kahyt ikke længere ledig, nulstilles valget
+      if (_cabin != null && !(_cabins?.any((c) => c.freeCabinIds.contains(_cabin!.cabinId)) ?? false)) {
+        _cabin = null;
+      }
+    });
+  }
+
+  /// Aktive tilvalg fra Core. Kladden har ingen bil og én passager, så Core filtrerer derefter.
+  Future<void> _loadAddOns() async {
+    setState(() {
+      _addOnsLoading = true;
+      _addOnsFailed = false;
+    });
+    final list = await ApiService().fetchAddOns(
+      travelDate: _departure?.scheduledDepartureTime,
+      hasVehicle: false,
+      passengerCount: 1,
+    );
+    if (!mounted) return;
+    setState(() {
+      _addOnsLoading = false;
+      _addOnsFailed = list == null;
+      _addOnCatalog = list;
+      if (list != null) _addons.removeWhere((id, _) => !list.any((a) => a.id == id));
+    });
   }
 
   void _useProfileData() {
@@ -74,8 +207,8 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
         _nameCtrl.text = u.fullName;
         _emailCtrl.text = u.email;
         _phoneCtrl.text = u.phone;
-        _nationality = u.nationality;
-        _birthDate = u.birthDate;
+        if (u.nationality.isNotEmpty) _nationality = u.nationality;
+        if (u.birthDate.isNotEmpty) _birthDate = u.birthDate;
       });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(backgroundColor: GoNordicTheme.success, content: Text(tr('bookingWizard.profileFilled', {'name': u.fullName}))),
@@ -83,59 +216,38 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
     }
   }
 
-  double get _total {
-    double s = 890 + (_cabin?.priceDkk ?? 0);
-    _addons.forEach((k, v) {
-      final a = AddOnModel.defaultAddOns.firstWhere((x) => x.id == k);
-      s += a.priceDkk * v;
-    });
-    return s;
-  }
-
   bool _isProcessingPayment = false;
 
-  /// Prisen fra Core for det valgte (vises på trin 4, så den svarer til beløbet hos Nets)
+  /// Prisen fra Core for det valgte (samme beregning som beløbet hos Nets). Appen beregner ingen pris selv.
   double? _serverTotal;
+  bool _quoteLoading = false;
+  bool _quoteFailed = false;
+  int _quoteSeq = 0;
 
   Future<void> _refreshQuote() async {
-    final dep = _nextDeparture();
+    final dep = _departure;
     if (dep == null) return;
-    setState(() => _serverTotal = null);
-    final draft = await _buildDraft(dep, firstName: 'Pris', lastName: 'Beregning', name: _nameCtrl.text, email: _emailCtrl.text, phone: _phoneCtrl.text);
+    final seq = ++_quoteSeq;
+    setState(() {
+      _serverTotal = null;
+      _quoteLoading = true;
+      _quoteFailed = false;
+    });
+    final draft = _buildDraft(dep, firstName: 'Pris', lastName: 'Beregning', name: _nameCtrl.text, email: _emailCtrl.text, phone: _phoneCtrl.text);
     final total = await ApiService().quoteTotal(draft);
-    if (mounted) setState(() => _serverTotal = total);
+    if (!mounted || seq != _quoteSeq) return; // et nyere valg er på vej
+    setState(() {
+      _quoteLoading = false;
+      _serverTotal = total;
+      _quoteFailed = total == null;
+    });
   }
 
-  // Appens kahytskategorier ⇒ Core's BookIT-koder (første ledige kahyt i kategorien bookes)
-  static const Map<String, List<String>> _cabinCodes = {
-    'OWNERS_SUITE': ['O2', 'O3', 'J3'],
-    'COMMODORE_BALCONY': ['X2', 'X1'],
-    'COMMODORE_DELUXE': ['X2', 'X1'],
-    'COMMODORE_SEAVIEW': ['C2'],
-    'STANDARD_SEAVIEW': ['A4', 'A4LV'],
-    'STANDARD_INSIDE': ['B4', 'B2', 'B3', 'BD', 'BC'],
-    'ECONOMY_INSIDE': ['E4', 'WL'],
-    'FAMILY': ['B5', 'F4', 'F4LV'],
-  };
-
-  /// En ledig kahyt i Core i den valgte kategori (eller null uden kahyt).
-  Future<String?> _resolveCabinId(DepartureModel dep) async {
-    if (_cabin == null) return null;
-    final cabins = await ApiService().fetchDepartureCabins(dep.id);
-    final free = cabins.where((c) => c['isBookedOnDeparture'] != true && c['isBooked'] != true).toList();
-    final codes = _cabinCodes[_cabin!.category] ?? const <String>[];
-    for (final code in codes) {
-      final hit = free.where((c) => c['category'] == code).toList();
-      if (hit.isNotEmpty) return hit.first['id'] as String?;
-    }
-    return free.isNotEmpty ? free.first['id'] as String? : null;
-  }
-
-  Future<Map<String, dynamic>> _buildDraft(DepartureModel dep, {required String firstName, required String lastName, required String name, required String email, required String phone}) async {
-    final cabinId = await _resolveCabinId(dep);
+  Map<String, dynamic> _buildDraft(DepartureModel dep, {required String firstName, required String lastName, required String name, required String email, required String phone}) {
+    final cabinId = _cabin?.cabinId;
     return {
       'termsAccepted': true,
-      'routeId': _routeId,
+      'routeId': dep.routeId,
       'departureId': dep.id,
       'outboundDate': dep.scheduledDepartureTime.toIso8601String().split('T')[0],
       'ticketClass': 'PREMIUM',
@@ -160,7 +272,6 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
       'cabinIds': [?cabinId], // prisberegningen (/pricing/calculate) bruger cabinIds
       'addOns': _addons.entries.map((e) => {'id': e.key, 'quantity': e.value}).toList(),
     };
-
   }
 
   Future<void> _startPaymentFlow() async {
@@ -174,43 +285,39 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
       );
       return;
     }
+    final nameParts = name.split(RegExp(r'\s+'));
+    if (nameParts.length < 2) {
+      // Intet opfundet efternavn – kunden skal selv skrive det
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(tr('bookingWizard.missingLastName'))),
+      );
+      return;
+    }
     if (_gender == null || _nationality == null || _birthDate == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(tr('bookingWizard.missingPassengerDetails'))),
       );
       return;
     }
+    final dep = _departure;
+    if (dep == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(backgroundColor: GoNordicTheme.error, content: Text(tr('bookingWizard.noDeparture'))),
+      );
+      return;
+    }
 
     setState(() => _isProcessingPayment = true);
 
-    final nameParts = name.split(' ');
     final firstName = nameParts.first;
-    final lastName = nameParts.length > 1 ? nameParts.sublist(1).join(' ') : 'Jensen';
+    final lastName = nameParts.sublist(1).join(' ');
 
-    final departures = BookingService().departures;
-    final dep = _nextDeparture() ?? departures.firstWhere(
-      (d) => d.routeId == _routeId,
-      orElse: () => departures.isNotEmpty
-          ? departures.first
-          : DepartureModel(
-              id: 'DEP-CPH-OSL-TOMORROW',
-              routeId: _routeId,
-              vesselId: 'VESSEL-CROWN',
-              vesselName: 'Crown Seaways',
-              scheduledDepartureTime: DateTime.now().add(const Duration(days: 1)),
-              scheduledArrivalTime: DateTime.now().add(const Duration(days: 1, hours: 17, minutes: 30)),
-              gateNumber: 'Gate 1 (Terminal Dampfærgevej)',
-              checkInOpen: true,
-              basePriceDkk: 890,
-            ),
-    );
-
-    final draft = await _buildDraft(dep, firstName: firstName, lastName: lastName, name: name, email: email, phone: phone);
+    final draft = _buildDraft(dep, firstName: firstName, lastName: lastName, name: name, email: email, phone: phone);
 
     final session = await ApiService().startCheckout(draft);
+    if (!mounted) return;
     setState(() => _isProcessingPayment = false);
 
-    if (!mounted) return;
     if (session == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -276,96 +383,214 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
     return _step5();
   }
 
-  /// Næste afgang på den valgte rute, der ikke er sejlet (mindst 30 min. til afgang).
-  DepartureModel? _nextDeparture() {
-    final cutoff = DateTime.now().add(const Duration(minutes: 30));
-    final upcoming = BookingService().departures
-        .where((d) => d.routeId == _routeId && d.scheduledDepartureTime.isAfter(cutoff))
-        .toList()
-      ..sort((a, b) => a.scheduledDepartureTime.compareTo(b.scheduledDepartureTime));
-    return upcoming.isEmpty ? null : upcoming.first;
-  }
-
   String _two(int n) => n.toString().padLeft(2, '0');
 
-  Widget _step1() => ListView(
-    padding: const EdgeInsets.all(16),
-    children: [
-      Text(tr('bookingWizard.step1.title'), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-      Card(
-        child: Column(
-          children: BookingService().routes.map((r) => ListTile(
-            title: Text(r.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-            leading: Icon(
-              _routeId == r.id ? Icons.radio_button_checked : Icons.radio_button_off,
-              color: GoNordicTheme.pine,
+  /// Indlæsning, fejl (med "Prøv igen") eller tom tilstand – bruges for alt, der hentes fra Core.
+  Widget _status({required bool loading, required bool failed, required String loadingText, required String failedText, VoidCallback? onRetry, String? emptyText}) {
+    if (loading) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        child: Row(
+          children: [
+            const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2)),
+            const SizedBox(width: 10),
+            Expanded(child: Text(loadingText, style: const TextStyle(fontSize: 12, color: GoNordicTheme.textSecondary))),
+          ],
+        ),
+      );
+    }
+    if (failed) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Row(
+          children: [
+            Expanded(child: Text(failedText, style: const TextStyle(color: GoNordicTheme.error, fontSize: 12, fontWeight: FontWeight.bold))),
+            if (onRetry != null) TextButton(onPressed: onRetry, child: Text(tr('bookingWizard.retry'))),
+          ],
+        ),
+      );
+    }
+    if (emptyText != null) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        child: Text(emptyText, style: const TextStyle(fontSize: 12, color: GoNordicTheme.textSecondary)),
+      );
+    }
+    return const SizedBox.shrink();
+  }
+
+  /// Prisen fra Core – vises kun, når serveren har beregnet den.
+  Widget _quoteView() {
+    if (_serverTotal != null) {
+      return Text(tr('bookingWizard.step4.total', {'amount': _serverTotal!.round()}), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: GoNordicTheme.pine));
+    }
+    return _status(
+      loading: _quoteLoading,
+      failed: _quoteFailed,
+      loadingText: tr('bookingWizard.quote.loading'),
+      failedText: tr('bookingWizard.quote.failed'),
+      onRetry: _refreshQuote,
+    );
+  }
+
+  Widget _step1() {
+    final service = BookingService();
+    final routes = service.routes;
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        Text(tr('bookingWizard.step1.title'), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+        if (routes.isEmpty)
+          _status(
+            loading: service.routesLoading,
+            failed: !service.routesLoading,
+            loadingText: tr('bookingWizard.step1.routesLoading'),
+            failedText: tr('bookingWizard.step1.routesUnavailable'),
+            onRetry: () => service.syncBackend(),
+          )
+        else
+          Card(
+            child: Column(
+              children: routes.map((r) => ListTile(
+                title: Text(r.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                leading: Icon(
+                  _routeId == r.id ? Icons.radio_button_checked : Icons.radio_button_off,
+                  color: GoNordicTheme.pine,
+                ),
+                onTap: () {
+                  if (_routeId != r.id) _selectRoute(r.id);
+                },
+              )).toList(),
             ),
-            onTap: () => setState(() => _routeId = r.id),
-          )).toList(),
-        ),
-      ),
-      const SizedBox(height: 12),
-      Builder(builder: (context) {
-        final dep = _nextDeparture();
-        if (dep == null) return const SizedBox.shrink();
-        final t = dep.scheduledDepartureTime.toLocal();
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 12),
-          child: Text(
-            tr('bookingWizard.step1.departure', {'date': '${t.day}/${t.month}-${t.year}', 'time': '${_two(t.hour)}:${_two(t.minute)}'}),
-            style: const TextStyle(fontWeight: FontWeight.w600, color: GoNordicTheme.pine),
           ),
-        );
-      }),
-      ElevatedButton(onPressed: () => setState(() => _step = 2), child: Text(tr('bookingWizard.step1.next'))),
-    ],
-  );
-
-  Widget _step2() => ListView(
-    padding: const EdgeInsets.all(16),
-    children: [
-      Text(tr('bookingWizard.step2.title'), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-      const SizedBox(height: 8),
-      ...CabinModel.defaultCabins.map((c) => CabinCard(
-        cabin: c, isSelected: _cabin?.id == c.id,
-        onSelect: () => setState(() => _cabin = c),
-      )),
-      const SizedBox(height: 12),
-      ElevatedButton(
-        onPressed: () {
-          if (_cabin == null) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(tr('bookingWizard.step2.selectCabin'))),
-            );
-            return;
-          }
-          setState(() => _step = 3);
-        },
-        child: Text(tr('bookingWizard.step2.next')),
-      ),
-    ],
-  );
-
-  Widget _step3() => ListView(
-    padding: const EdgeInsets.all(16),
-    children: [
-      Text(tr('bookingWizard.step3.title'), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-      ...AddOnModel.defaultAddOns.map((a) => Card(
-        child: CheckboxListTile(
-          title: Text(a.name), subtitle: Text('${a.priceDkk.toInt()} DKK'),
-          value: _addons.containsKey(a.id), activeColor: GoNordicTheme.pine,
-          onChanged: (v) => setState(() {
-            if (v == true) {
-              _addons[a.id] = 1;
-            } else {
-              _addons.remove(a.id);
+        const SizedBox(height: 12),
+        if (_routeId != null)
+          Builder(builder: (context) {
+            final dep = _departure;
+            if (dep == null) {
+              return _status(
+                loading: _departuresLoading,
+                failed: _departuresFailed,
+                loadingText: tr('bookingWizard.step1.departuresLoading'),
+                failedText: tr('bookingWizard.step1.departuresUnavailable'),
+                onRetry: _loadDepartures,
+                emptyText: tr('bookingWizard.step1.noDepartures'),
+              );
             }
+            final t = dep.scheduledDepartureTime.toLocal();
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Text(
+                tr('bookingWizard.step1.departure', {'date': '${t.day}/${t.month}-${t.year}', 'time': '${_two(t.hour)}:${_two(t.minute)}'}),
+                style: const TextStyle(fontWeight: FontWeight.w600, color: GoNordicTheme.pine),
+              ),
+            );
           }),
+        ElevatedButton(
+          onPressed: _departure == null
+              ? null
+              : () {
+                  setState(() => _step = 2);
+                  _loadCabins();
+                },
+          child: Text(tr('bookingWizard.step1.next')),
         ),
-      )),
-      ElevatedButton(onPressed: () { setState(() => _step = 4); _refreshQuote(); }, child: Text(tr('bookingWizard.step3.next'))),
-    ],
-  );
+      ],
+    );
+  }
+
+  Widget _step2() {
+    final cabins = _cabins;
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        Text(tr('bookingWizard.step2.title'), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 8),
+        if (cabins == null || cabins.isEmpty)
+          _status(
+            loading: _cabinsLoading,
+            failed: _cabinsFailed,
+            loadingText: tr('bookingWizard.step2.loading'),
+            failedText: tr('bookingWizard.step2.unavailable'),
+            onRetry: _loadCabins,
+            emptyText: cabins == null ? null : tr('bookingWizard.step2.none'),
+          )
+        else
+          ...cabins.map((c) => CabinCard(
+            cabin: c,
+            isSelected: _cabin?.category == c.category,
+            onSelect: () {
+              setState(() => _cabin = c);
+              _refreshQuote();
+            },
+          )),
+        if (_cabin != null) _quoteView(),
+        const SizedBox(height: 12),
+        ElevatedButton(
+          onPressed: cabins == null
+              ? null
+              : () {
+                  if (cabins.isNotEmpty && _cabin == null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(tr('bookingWizard.step2.selectCabin'))),
+                    );
+                    return;
+                  }
+                  setState(() => _step = 3);
+                  if (_addOnCatalog == null) _loadAddOns();
+                },
+          child: Text(tr('bookingWizard.step2.next')),
+        ),
+      ],
+    );
+  }
+
+  Widget _step3() {
+    final catalog = _addOnCatalog;
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        Text(tr('bookingWizard.step3.title'), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+        if (catalog == null || catalog.isEmpty)
+          _status(
+            loading: _addOnsLoading,
+            failed: _addOnsFailed,
+            loadingText: tr('bookingWizard.step3.loading'),
+            failedText: tr('bookingWizard.step3.unavailable'),
+            onRetry: _loadAddOns,
+            emptyText: catalog == null ? null : tr('bookingWizard.step3.none'),
+          )
+        else
+          ...catalog.map((a) => Card(
+            child: CheckboxListTile(
+              title: Text(a.name),
+              subtitle: a.priceDkk == null ? null : Text(tr('bookingWizard.step3.price', {'amount': a.priceDkk!.round()})),
+              value: _addons.containsKey(a.id), activeColor: GoNordicTheme.pine,
+              onChanged: (v) {
+                setState(() {
+                  if (v == true) {
+                    _addons[a.id] = 1;
+                  } else {
+                    _addons.remove(a.id);
+                  }
+                });
+                _refreshQuote();
+              },
+            ),
+          )),
+        const SizedBox(height: 8),
+        _quoteView(),
+        const SizedBox(height: 8),
+        ElevatedButton(
+          onPressed: () {
+            setState(() => _step = 4);
+            if (_serverTotal == null && !_quoteLoading) _refreshQuote();
+          },
+          child: Text(tr('bookingWizard.step3.next')),
+        ),
+      ],
+    );
+  }
 
   Widget _step4() {
     final user = AuthService().currentUser;
@@ -388,7 +613,12 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
                 const Icon(Icons.check_circle, color: Color(0xFF34A853), size: 20),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: Text(tr('bookingWizard.step4.loggedInAs', {'name': user.fullName, 'tier': user.clubTier}), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                  child: Text(
+                    user.clubTier.isNotEmpty
+                        ? tr('bookingWizard.step4.loggedInAs', {'name': user.fullName, 'tier': user.clubTier})
+                        : tr('bookingWizard.step4.loggedInAsNoTier', {'name': user.fullName}),
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                  ),
                 ),
                 TextButton(
                   onPressed: _useProfileData,
@@ -414,6 +644,7 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
                 TextButton(
                   onPressed: () {
                     Navigator.push(context, MaterialPageRoute(builder: (_) => const LoginScreen())).then((_) {
+                      if (!mounted) return;
                       setState(() {
                         final u = AuthService().currentUser;
                         if (u != null) {
@@ -496,10 +727,11 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
           ),
         ),
         const SizedBox(height: 8),
-        Text(tr('bookingWizard.step4.total', {'amount': (_serverTotal ?? _total).toInt()}), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: GoNordicTheme.pine)),
+        // Kun Core's pris vises; uden pris kan der ikke betales
+        _quoteView(),
         const SizedBox(height: 10),
         ElevatedButton(
-          onPressed: _isProcessingPayment ? null : _startPaymentFlow,
+          onPressed: _isProcessingPayment || _serverTotal == null ? null : _startPaymentFlow,
           child: _isProcessingPayment
               ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
               : Text(tr('bookingWizard.step4.continueToPayment')),
