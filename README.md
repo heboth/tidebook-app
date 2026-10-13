@@ -51,7 +51,8 @@ Appen håndterer hele passagerrejsen mellem København og Oslo med færgerne **M
 | **Boardingkort** | Udstedes og HMAC-signeres af Core. Appen gemmer eller bruger intet statisk salt; QR-payload hentes fra Core's check-in svar. |
 | **Manifest-beskyttelse** | Passagerlister og boardingdata (`/api/boarding/:departureId/manifest`) er beskyttet i Core og kræver medarbejder- eller intern token. |
 | **Autentifikation** | Login verificeres mod Core's identity service (`/api/auth/portal-login`), og tokens fornys sikkert. |
-| **API-konfiguration** | API-adressen er dynamisk konfigurerbar og ikke låst til hardkodet `localhost:4000`. |
+| **API-konfiguration** | API-adressen er dynamisk konfigurerbar; release-builds kræver `--dart-define=TIDEBOOK_API_URL` (localhost kun under udvikling). |
+| **Kun Core-data** | Ingen indbyggede ruter, afgange, bookinger, kahytter, tilvalg, priser eller konti. Alt hentes fra TideBook Core (priser fra TideRMS via Core); kan Core ikke nås, vises en fejl. |
 
 ---
 
@@ -79,9 +80,14 @@ flutter pub get
 ```
 
 ### Konfiguration af API-adresse
-Som standard forbinder appen automatisk til:
-- Android emulator: `http://10.0.2.2:4000/api`
-- iOS simulator / desktop: `http://localhost:4000/api`
+Under udvikling (debug/profile) forbinder appen automatisk til:
+- Android emulator: `http://10.0.2.2:4000/api` (TideCMS: `http://10.0.2.2:4300`)
+- iOS simulator / desktop: `http://localhost:4000/api` (TideCMS: `http://localhost:4300`)
+
+En release-build har ingen localhost-standard: mangler `TIDEBOOK_API_URL` eller `TIDECMS_URL`, viser appen en fejlskærm.
+```bash
+flutter build ipa --dart-define=TIDEBOOK_API_URL=https://api.gonordic.dk --dart-define=TIDECMS_URL=https://cms.gonordic.dk
+```
 
 API-adressen kan overstyres under opstart:
 ```bash
@@ -151,7 +157,8 @@ lib/
 │   ├── auth_service.dart          # Brugerautentifikation og session
 │   ├── booking_service.dart       # Bookinghåndtering og nøglelager
 │   ├── qr_security_service.dart   # Hjælpefunktioner til Core boardingkort
-│   └── seed_data.dart             # Lokale fallback- og demodata
+│   ├── texts_service.dart         # Tekster (indbygget da.json + TideCMS)
+│   └── token_store.dart           # Booking-nøgler i Keychain/Keystore (flutter_secure_storage)
 ├── theme/
 │   └── gonordic_theme.dart        # Go Nordic Cruiseline design tokens
 └── widgets/

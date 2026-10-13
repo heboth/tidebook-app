@@ -7,7 +7,6 @@ class DepartureModel {
   final DateTime scheduledArrivalTime;
   final String gateNumber;
   final bool checkInOpen;
-  final double basePriceDkk;
 
   const DepartureModel({
     required this.id,
@@ -18,7 +17,6 @@ class DepartureModel {
     required this.scheduledArrivalTime,
     required this.gateNumber,
     required this.checkInOpen,
-    required this.basePriceDkk,
   });
 
   String get timeFormatted {
@@ -38,17 +36,23 @@ class DepartureModel {
     return '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}-${d.year}';
   }
 
-  factory DepartureModel.fromJson(Map<String, dynamic> json) {
+  /// Bygger en afgang fra Core. Uden id, rute eller gyldige tider opfindes der ingen afgang (null).
+  static DepartureModel? tryFromJson(Map<String, dynamic> json) {
+    final id = json['id']?.toString() ?? '';
+    final routeId = json['routeId']?.toString() ?? '';
+    final dep = DateTime.tryParse(json['scheduledDepartureTime']?.toString() ?? '');
+    final arr = DateTime.tryParse(json['scheduledArrivalTime']?.toString() ?? '');
+    if (id.isEmpty || routeId.isEmpty || dep == null) return null;
+    if (json['status'] == 'CANCELLED') return null;
     return DepartureModel(
-      id: json['id'] ?? '',
-      routeId: json['routeId'] ?? '',
-      vesselId: json['vesselId'] ?? 'VESSEL-CROWN',
-      vesselName: json['vesselName'] ?? (json['vesselId'] == 'VESSEL-PEARL' ? 'Pearl Seaways' : 'Crown Seaways'),
-      scheduledDepartureTime: DateTime.tryParse(json['scheduledDepartureTime'] ?? '') ?? DateTime.now(),
-      scheduledArrivalTime: DateTime.tryParse(json['scheduledArrivalTime'] ?? '') ?? DateTime.now().add(const Duration(hours: 17, minutes: 30)),
-      gateNumber: json['gateNumber'] ?? 'Gate 1',
-      checkInOpen: json['checkInOpen'] ?? true,
-      basePriceDkk: (json['basePriceDkk'] as num?)?.toDouble() ?? 890.0,
+      id: id,
+      routeId: routeId,
+      vesselId: json['vesselId']?.toString() ?? '',
+      vesselName: json['vesselName']?.toString() ?? '',
+      scheduledDepartureTime: dep,
+      scheduledArrivalTime: arr ?? dep,
+      gateNumber: json['gateNumber']?.toString() ?? '',
+      checkInOpen: json['checkInOpen'] == true,
     );
   }
 }

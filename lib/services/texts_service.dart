@@ -29,9 +29,16 @@ class TextsService {
 
   String get language => _language;
 
-  static String get tideCmsUrl {
-    const env = String.fromEnvironment('TIDECMS_URL');
-    if (env.isNotEmpty) return env.replaceFirst(RegExp(r'/+$'), '');
+  static const _envUrl = String.fromEnvironment('TIDECMS_URL');
+
+  /// I release-builds skal TideCMS' adresse angives med `--dart-define=TIDECMS_URL=...`.
+  static bool isConfigured({bool releaseMode = kReleaseMode}) => !releaseMode || _envUrl.isNotEmpty;
+
+  /// TideCMS' adresse – null i en release-build uden define (så bruges kun de indbyggede tekster).
+  /// localhost/10.0.2.2 bruges kun under udvikling.
+  static String? get tideCmsUrl {
+    if (_envUrl.isNotEmpty) return _envUrl.replaceFirst(RegExp(r'/+$'), '');
+    if (kReleaseMode) return null;
     try {
       if (Platform.isAndroid) return 'http://10.0.2.2:4300';
     } catch (_) {}
@@ -66,9 +73,11 @@ class TextsService {
   }
 
   Future<void> refresh() async {
+    final base = tideCmsUrl;
+    if (base == null) return;
     try {
       final res = await http
-          .get(Uri.parse('$tideCmsUrl/api/v1/bundles/$_namespace/$_language'))
+          .get(Uri.parse('$base/api/v1/bundles/$_namespace/$_language'))
           .timeout(const Duration(seconds: 4));
       if (res.statusCode != 200) return;
       final remote = jsonDecode(utf8.decode(res.bodyBytes));

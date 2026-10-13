@@ -39,12 +39,6 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
     }
   }
 
-  void _quickFill(String pnr, String email) {
-    _pnrController.text = pnr;
-    _emailController.text = email;
-    _searchBooking();
-  }
-
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
@@ -81,15 +75,6 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton.icon(onPressed: _searchBooking, icon: const Icon(Icons.search), label: Text(tr('myBookings.findButton'))),
-                        ),
-                        const SizedBox(height: 10),
-                        Wrap(
-                          spacing: 8,
-                          children: [
-                            Text(tr('myBookings.testLabel'), style: const TextStyle(fontSize: 11, color: GoNordicTheme.textSecondary)),
-                            ActionChip(label: const Text('TIDE-9021'), onPressed: () => _quickFill('TIDE-9021', 'mads.jensen@example.dk')),
-                            ActionChip(label: const Text('TIDE-4412'), onPressed: () => _quickFill('TIDE-4412', 'henrik.lindqvist@oslo-fjord.no')),
-                          ],
                         ),
                       ],
                     ),

@@ -55,6 +55,10 @@ class BookingModel {
   final String paymentStatus;
   final String gateNumber;
   final bool isDirectCustomer;
+
+  /// Salgskanalen fra Core ('B2C', 'AGENT', 'CALL_CENTER', 'OTA') – null hvis Core ikke sender den
+  final String? channel;
+  final bool isGroupBooking;
   final DateTime createdAt;
   final List<BoardingPassModel> boardingPasses;
   final String? bookingToken;
@@ -84,6 +88,8 @@ class BookingModel {
     required this.paymentStatus,
     this.gateNumber = 'Gate 1 (Terminal Dampfærgevej)',
     this.isDirectCustomer = true,
+    this.channel,
+    this.isGroupBooking = false,
     DateTime? createdAt,
     this.boardingPasses = const [],
     this.bookingToken,
@@ -131,6 +137,8 @@ class BookingModel {
       paymentStatus: paymentStatus ?? this.paymentStatus,
       gateNumber: gateNumber,
       isDirectCustomer: isDirectCustomer,
+      channel: channel,
+      isGroupBooking: isGroupBooking,
       createdAt: createdAt,
       boardingPasses: boardingPasses ?? this.boardingPasses,
       bookingToken: bookingToken ?? this.bookingToken,
@@ -216,6 +224,8 @@ class BookingModel {
       paymentStatus: json['paymentStatus'] ?? 'PENDING',
       gateNumber: json['gateNumber'] ?? 'Gate 1 (Terminal Dampfærgevej)',
       isDirectCustomer: json['agentId'] == null && json['bookedByAgent'] == null,
+      channel: json['channel']?.toString(),
+      isGroupBooking: json['isGroupBooking'] == true,
       createdAt: DateTime.tryParse(json['createdAt'] ?? '') ?? DateTime.now(),
       boardingPasses: rawBoardingPasses,
       bookingToken: effectiveToken,

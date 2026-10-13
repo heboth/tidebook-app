@@ -26,7 +26,7 @@
     },
     "profileTooltip": "Profil",
     "bannerBadge": "MINICRUISE TILBUD",
-    "bannerText": "Sejl København-Oslo tur/retur fra kun 890 DKK →",
+    "bannerText": "Sejl København-Oslo tur/retur – se dagens priser →",
     "hero": {
       "badge": "DAGLIGE AFGANGE KØBENHAVN ⇄ OSLO",
       "title": "Oplev Norge fra søsiden",
@@ -37,12 +37,11 @@
       "ready": "Stamdata, pas og elbil ({plate}) er klar til brug.",
       "loginTitle": "Log ind for at bruge dine gemte data",
       "loginSub": "Udfylder bilnummer og kontaktoplysninger automatisk.",
-      "loginLink": "Log ind →"
+      "loginLink": "Log ind →",
+      "greetingNoTier": "Hej, {name} 👋"
     },
     "search": {
       "ferryTab": "Færgeoverfart",
-      "routeCphOsl": "København → Oslo",
-      "routeOslCph": "Oslo → København",
       "adults": "{count} voksne",
       "children": "{count} børn",
       "vehicle": "Bil",
@@ -58,7 +57,13 @@
       "deckSub": "Udsigt over Kattegat og Oslofjorden.",
       "shopTitle": "Tax-Free Sea Shop",
       "shopSub": "Kosmetik, slik og mærkevarer op til 40% rabat."
-    }
+    },
+    "priceUnavailable": "Priserne kunne ikke hentes",
+    "retry": "Prøv igen",
+    "noPrice": "–",
+    "price": "{amount},-",
+    "routesLoading": "Henter ruter…",
+    "routesUnavailable": "Ruterne kunne ikke hentes fra TideBook."
   },
   "bookingWizard": {
     "profileFilled": "✓ Kontaktoplysninger udfyldt fra {name}s profil",
@@ -70,16 +75,28 @@
     "step1": {
       "title": "1. Vælg Rute",
       "departure": "Afgang: {date} kl. {time}",
-      "next": "Vælg Kahyt →"
+      "next": "Vælg Kahyt →",
+      "routesLoading": "Henter ruter…",
+      "routesUnavailable": "Ruterne kunne ikke hentes fra TideBook.",
+      "departuresLoading": "Henter afgange…",
+      "departuresUnavailable": "Afgangene kunne ikke hentes fra TideBook.",
+      "noDepartures": "Ingen ledige afgange på ruten."
     },
     "step2": {
       "title": "2. Vælg Kahyt",
       "selectCabin": "Vælg venligst en kahyt for at fortsætte.",
-      "next": "Tilvalg →"
+      "next": "Tilvalg →",
+      "loading": "Henter ledige kahytter…",
+      "unavailable": "Kahytterne kunne ikke hentes fra TideBook.",
+      "none": "Der er ingen ledige kahytter på afgangen."
     },
     "step3": {
       "title": "3. Tilvalg & Måltider",
-      "next": "Kontaktoplysninger →"
+      "next": "Kontaktoplysninger →",
+      "loading": "Henter tilvalg…",
+      "unavailable": "Tilvalgene kunne ikke hentes fra TideBook.",
+      "none": "Der er ingen tilvalg til denne afgang.",
+      "price": "{amount} DKK"
     },
     "step4": {
       "title": "4. Kontaktoplysninger & Profil",
@@ -100,7 +117,8 @@
       "genderMale": "Mand",
       "genderOther": "Andet",
       "nationality": "NATIONALITET",
-      "manifestNote": "Køn, nationalitet og fødselsdato indberettes til myndighederne for rejser over 20 sømil (EU-krav)."
+      "manifestNote": "Køn, nationalitet og fødselsdato indberettes til myndighederne for rejser over 20 sømil (EU-krav).",
+      "loggedInAsNoTier": "Logget ind: {name}"
     },
     "step5": {
       "title": "Booking Gennemført!",
@@ -121,7 +139,14 @@
       "pay": "Betal med kort eller MobilePay",
       "cancel": "Annuller betaling"
     },
-    "missingPassengerDetails": "Udfyld fødselsdato, køn og nationalitet – rederiet skal indberette dem til myndighederne."
+    "missingPassengerDetails": "Udfyld fødselsdato, køn og nationalitet – rederiet skal indberette dem til myndighederne.",
+    "missingLastName": "Skriv både fornavn og efternavn.",
+    "noDeparture": "Der er ingen afgang at booke. Vælg en anden rute eller prøv igen.",
+    "retry": "Prøv igen",
+    "quote": {
+      "loading": "Beregner pris…",
+      "failed": "Prisen kunne ikke beregnes. Prøv igen."
+    }
   },
   "myBookings": {
     "missingFields": "Indtast venligst både bookingnummer (PNR) og e-mail/efternavn.",
@@ -130,14 +155,15 @@
     "findHeading": "Find Din Reservation",
     "findIntro": "Indtast bookingnummer (PNR) og e-mail for at hente dit boardingkort.",
     "pnrLabel": "BOOKINGNUMMER (PNR)",
-    "pnrHint": "F.eks. TIDE-9021",
+    "pnrHint": "Står i din bookingbekræftelse",
     "emailLabel": "E-MAIL ELLER EFTERNAVN",
-    "emailHint": "F.eks. mads.jensen@example.dk",
+    "emailHint": "E-mail eller efternavn fra bookingen",
     "findButton": "Find Booking",
-    "testLabel": "Test:",
     "yourReservations": "DINE RESERVATIONER",
     "checkInDone": "✓ Mobil Check-in gennemført! Boardingkort udstedt.",
-    "checkInRejected": "Check-in afvist af serveren."
+    "checkInRejected": "Check-in afvist af serveren.",
+    "lookupUnavailable": "Kan ikke forbinde til TideBook. Tjek din internetforbindelse og prøv igen.",
+    "notFound": "Ingen booking fundet for de angivne oplysninger. Tjek bookingnummer samt e-mail eller efternavn."
   },
   "bookingDetail": {
     "checkInDone": "✓ Mobil Check-in gennemført! Boardingkort er udstedt.",
@@ -183,7 +209,9 @@
     "verifying": "Verificerer...",
     "submit": "Log ind",
     "demoCustomer": "Kunde (Tilladt)",
-    "demoAgent": "OA Agent (Afvises)"
+    "demoAgent": "OA Agent (Afvises)",
+    "invalidCredentials": "Ugyldigt brugernavn eller adgangskode. Prøv igen.",
+    "coreUnavailable": "Kan ikke forbinde til TideBook. Login kræver forbindelse – prøv igen om lidt."
   },
   "profile": {
     "editTitle": "Rediger Profil & Stamdata",
@@ -199,7 +227,6 @@
     "loginHeading": "Log ind på din profil",
     "loginIntro": "Gem dine stamdata, adresse og bilnummer, så din booking udfyldes automatisk.",
     "loginOrCreate": "Log ind / Opret profil",
-    "demoLogin": "Demo: Log ind som Mads Jensen",
     "loggedInTitle": "Min Profil & Personlige Data",
     "memberNumber": "Medlemsnr: {number}",
     "bonusPoints": "Opsparede bonuspoint: {points}",
@@ -245,9 +272,11 @@
       "checkIn": "Tjek Ind"
     },
     "cabinCard": {
-      "breakfastIncluded": "INKL. MORGENMAD",
       "selected": "✓ Valgt",
-      "select": "Vælg kahyt"
+      "select": "Vælg kahyt",
+      "berths": "{count} køjer/senge",
+      "decks": "Dæk {decks}",
+      "free": "{count} ledige"
     },
     "appBar": {
       "badge": "PASSAGER"
@@ -274,5 +303,32 @@
     "FR": "Frankrig",
     "ES": "Spanien",
     "IT": "Italien"
+  },
+  "cabinCategories": {
+    "O3": "Owner's Suite 3P (dobbeltseng + sofa)",
+    "O2": "Owner's Suite 2P (dobbeltseng)",
+    "J3": "Owner's Suite + jacuzzi 3P",
+    "X2": "Deluxe havudsigt 2P (dobbeltseng)",
+    "X1": "Deluxe 1P (enkeltseng)",
+    "C2": "Commodore havudsigt 2P (dobbeltseng)",
+    "WL": "Inside Commodore 2P (separate senge)",
+    "A4": "Udvendig kahyt havudsigt 4P (køjer)",
+    "A4LV": "Udvendig, begrænset udsyn 4P (køjer)",
+    "B5": "Indvendig familie-/storkahyt 5P",
+    "B4": "Indvendig standardkahyt 4P",
+    "B3": "Indvendig kahyt 3P (køjer)",
+    "B2": "Indvendig kahyt 2P (køjesenge)",
+    "BC": "Indvendig kahyt 2P (køjesenge)",
+    "BD": "Indvendig kahyt 2P (lille dobbeltseng)",
+    "E4": "Economy indvendig 4P",
+    "H2": "Handicapkahyt havudsigt 2P (niveaufri)",
+    "I2": "Handicapkahyt indvendig 2P (niveaufri)",
+    "F4": "Kæledyrskahyt havudsigt 4P",
+    "F4LV": "Kæledyrskahyt, begrænset udsyn 4P",
+    "G4": "Kæledyrskahyt indvendig 4P"
+  },
+  "config": {
+    "title": "Appen er ikke konfigureret",
+    "body": "Denne build mangler adressen på TideBook Core. Byg appen med --dart-define={keys}."
   }
 }

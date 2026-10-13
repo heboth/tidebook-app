@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import '../models/addon_model.dart';
 import '../models/route_model.dart';
 import '../models/departure_model.dart';
 import '../models/booking_model.dart';
@@ -11,11 +13,15 @@ class BookingLookupResult {
   final String? bookingToken;
   final String? errorMessage;
 
+  /// Sand, når Core ikke kunne nås (ingen svar) – adskiller netværksfejl fra "ikke fundet"
+  final bool networkError;
+
   const BookingLookupResult({
     required this.success,
     this.booking,
     this.bookingToken,
     this.errorMessage,
+    this.networkError = false,
   });
 }
 
@@ -103,21 +109,38 @@ class ApiService {
 
   static String? _customBaseUrl;
 
+  /// HTTP-klienten mod Core. Kan udskiftes i tests (fx med `MockClient`).
+  static http.Client _client = http.Client();
+  @visibleForTesting
+  static set client(http.Client c) => _client = c;
+  static http.Client get client => _client;
+
   /// Configure API root address at runtime (e.g. from settings or environment)
   static void setBaseUrl(String url) {
     final clean = url.trim().replaceFirst(RegExp(r'/+$'), '');
     _customBaseUrl = clean.endsWith('/api') ? clean : '$clean/api';
   }
 
+  static const _envUrl = String.fromEnvironment('TIDEBOOK_API_URL');
+
+  /// Er Core-adressen sat? I release-builds skal den angives med
+  /// `--dart-define=TIDEBOOK_API_URL=...` – localhost-standarden gælder kun under udvikling.
+  static bool isConfigured({bool releaseMode = kReleaseMode}) =>
+      !releaseMode || (_customBaseUrl != null && _customBaseUrl!.isNotEmpty) || _envUrl.isNotEmpty;
+
   static String get baseUrl {
     if (_customBaseUrl != null && _customBaseUrl!.isNotEmpty) {
       return _customBaseUrl!;
     }
-    const envUrl = String.fromEnvironment('TIDEBOOK_API_URL');
-    if (envUrl.isNotEmpty) {
-      final clean = envUrl.trim().replaceFirst(RegExp(r'/+$'), '');
+    if (_envUrl.isNotEmpty) {
+      final clean = _envUrl.trim().replaceFirst(RegExp(r'/+$'), '');
       return clean.endsWith('/api') ? clean : '$clean/api';
     }
+    if (kReleaseMode) {
+      // Ingen stille fallback til localhost i en udgivet app – main() viser en fejlskærm i stedet
+      throw StateError('TIDEBOOK_API_URL er ikke angivet (--dart-define=TIDEBOOK_API_URL=https://...).');
+    }
+    // Kun under udvikling: Android-emulatoren når værtsmaskinen på 10.0.2.2
     try {
       if (Platform.isAndroid) {
         return 'http://10.0.2.2:4000/api';
@@ -138,7 +161,7 @@ class ApiService {
 
   Future<Map<String, dynamic>?> checkHealth() async {
     try {
-      final res = await http.get(Uri.parse(healthUrl)).timeout(const Duration(seconds: 3));
+      final res = await _client.get(Uri.parse(healthUrl)).timeout(const Duration(seconds: 3));
       if (res.statusCode == 200) {
         return jsonDecode(res.body) as Map<String, dynamic>;
       }
@@ -146,10 +169,11 @@ class ApiService {
     return null;
   }
 
-  /// Authenticate customer against Core's /api/auth/portal-login
+  /// Kundelogin mod Core's /api/auth/portal-login.
+  /// Returnerer Core's svar ({IsLoggedIn, token, expiresInSeconds, user}) eller null, hvis Core ikke kan nås.
   Future<Map<String, dynamic>?> portalLogin(String username, String password) async {
     try {
-      final res = await http.post(
+      final res = await _client.post(
         Uri.parse('$baseUrl/auth/portal-login'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
@@ -166,9 +190,28 @@ class ApiService {
     return null;
   }
 
+  /// Fornyer kundens token hos Core (/api/auth/portal-renew). null hvis Core ikke kan nås.
+  Future<Map<String, dynamic>?> portalRenew(String token) async {
+    try {
+      final res = await _client.post(
+        Uri.parse('$baseUrl/auth/portal-renew'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({'token': token}),
+      ).timeout(const Duration(seconds: 5));
+
+      if (res.statusCode == 200) {
+        return jsonDecode(res.body) as Map<String, dynamic>;
+      }
+    } catch (_) {}
+    return null;
+  }
+
   Future<Map<String, dynamic>?> getPortalSession(String token) async {
     try {
-      final res = await http.get(
+      final res = await _client.get(
         Uri.parse('$baseUrl/auth/portal-session'),
         headers: {
           'Content-Type': 'application/json',
@@ -183,9 +226,10 @@ class ApiService {
     return null;
   }
 
+  /// Ruterne fra Core. null hvis Core ikke kan nås.
   Future<List<RouteModel>?> fetchRoutes() async {
     try {
-      final res = await http.get(Uri.parse('$baseUrl/routes')).timeout(const Duration(seconds: 4));
+      final res = await _client.get(Uri.parse('$baseUrl/routes')).timeout(const Duration(seconds: 4));
       if (res.statusCode == 200) {
         final list = jsonDecode(res.body) as List;
         return list.map((item) => RouteModel.fromJson(item as Map<String, dynamic>)).toList();
@@ -194,15 +238,80 @@ class ApiService {
     return null;
   }
 
-  Future<List<DepartureModel>?> fetchDepartures() async {
+  /// Afgange fra Core, evt. for én rute og/eller dato (YYYY-MM-DD). null hvis Core ikke kan nås.
+  Future<List<DepartureModel>?> fetchDepartures({String? routeId, String? date}) async {
     try {
-      final res = await http.get(Uri.parse('$baseUrl/departures')).timeout(const Duration(seconds: 4));
+      final uri = Uri.parse('$baseUrl/departures').replace(queryParameters: {
+        'routeId': ?routeId,
+        'date': ?date,
+      });
+      final res = await _client.get(uri).timeout(const Duration(seconds: 6));
       if (res.statusCode == 200) {
         final list = jsonDecode(res.body) as List;
-        return list.map((item) => DepartureModel.fromJson(item as Map<String, dynamic>)).toList();
+        return list
+            .whereType<Map<String, dynamic>>()
+            .map(DepartureModel.tryFromJson)
+            .whereType<DepartureModel>()
+            .toList();
       }
     } catch (_) {}
     return null;
+  }
+
+  /// Tilvalg fra Core (/api/addons) – kun aktive og gyldige på rejsedatoen. null hvis Core ikke kan nås.
+  Future<List<AddOnModel>?> fetchAddOns({DateTime? travelDate, bool? hasVehicle, int? passengerCount}) async {
+    try {
+      final uri = Uri.parse('$baseUrl/addons').replace(queryParameters: {
+        if (hasVehicle != null) 'hasVehicle': '$hasVehicle',
+        if (passengerCount != null) 'passengerCount': '$passengerCount',
+      });
+      final res = await _client.get(uri).timeout(const Duration(seconds: 5));
+      if (res.statusCode == 200) {
+        final list = jsonDecode(res.body) as List;
+        return list
+            .whereType<Map<String, dynamic>>()
+            .map(AddOnModel.fromJson)
+            .where((a) => a.isAvailableOn(travelDate ?? DateTime.now()))
+            .toList();
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  /// Laveste pris pr. dag fra Core (/api/pricing/lowest – TideRMS-priser via Core).
+  /// Nøgle = dato (YYYY-MM-DD), værdi = pris i DKK eller null (ingen pris den dag). null hvis Core ikke kan nås.
+  Future<Map<String, double?>?> fetchLowestPrices({required String routeId, required String from, required String to}) async {
+    try {
+      final uri = Uri.parse('$baseUrl/pricing/lowest').replace(queryParameters: {'routeId': routeId, 'from': from, 'to': to});
+      final res = await _client.get(uri).timeout(const Duration(seconds: 15));
+      if (res.statusCode == 200) {
+        final body = jsonDecode(res.body) as Map<String, dynamic>;
+        final days = body['days'] as List? ?? const [];
+        return {
+          for (final d in days.whereType<Map>())
+            if (d['date'] is String) d['date'] as String: (d['priceDkk'] as num?)?.toDouble(),
+        };
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  /// Henter en booking fra Core med kundens booking-nøgle (x-booking-token).
+  /// Returnerer (booking, null) ved succes, (null, statuskode) når Core afviser, og (null, null) når Core ikke kan nås.
+  Future<(BookingModel?, int?)> fetchBooking(String pnr, String bookingToken) async {
+    try {
+      final res = await _client.get(
+        Uri.parse('$baseUrl/bookings/${Uri.encodeComponent(pnr.toUpperCase())}'),
+        headers: {'Content-Type': 'application/json', 'x-booking-token': bookingToken},
+      ).timeout(const Duration(seconds: 5));
+      if (res.statusCode == 200) {
+        final json = jsonDecode(res.body) as Map<String, dynamic>;
+        return (BookingModel.fromJson(json, bookingToken: bookingToken), null);
+      }
+      return (null, res.statusCode);
+    } catch (_) {
+      return (null, null);
+    }
   }
 
   /// Lookup booking with PNR and Email / Last Name (returns booking + bookingToken)
@@ -219,7 +328,7 @@ class ApiService {
         body['lastName'] = identifier.toLowerCase();
       }
 
-      final res = await http.post(
+      final res = await _client.post(
         Uri.parse('$baseUrl/bookings/lookup'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(body),
@@ -247,6 +356,7 @@ class ApiService {
       return const BookingLookupResult(
         success: false,
         errorMessage: 'Kunne ikke forbinde til booking-serveren.',
+        networkError: true,
       );
     }
   }
@@ -265,7 +375,7 @@ class ApiService {
         headers['x-booking-token'] = bookingToken;
       }
 
-      final res = await http.post(
+      final res = await _client.post(
         Uri.parse('$baseUrl/bookings/${pnr.toUpperCase()}/check-in'),
         headers: headers,
         body: jsonEncode({'legType': legType}),
@@ -313,28 +423,30 @@ class ApiService {
   // Nets Betalingsmotor Integration Flow
   // ==========================================
 
-  /// Start checkout session: Core registers draft as PENDING and creates Nets session
   /// Kahytter på en afgang fra Core (id, kategori som BookIT-kode, køjer, om den er optaget).
-  Future<List<Map<String, dynamic>>> fetchDepartureCabins(String departureId) async {
+  /// null hvis Core ikke kan nås eller afviser.
+  Future<List<Map<String, dynamic>>?> fetchDepartureCabins(String departureId) async {
     try {
-      final res = await http.get(Uri.parse('$baseUrl/departures/${Uri.encodeComponent(departureId)}/cabins')).timeout(const Duration(seconds: 4));
+      final res = await _client.get(Uri.parse('$baseUrl/departures/${Uri.encodeComponent(departureId)}/cabins')).timeout(const Duration(seconds: 6));
       if (res.statusCode == 200) {
         final body = jsonDecode(res.body);
         final list = (body is Map ? body['cabins'] : body) as List? ?? const [];
         return list.whereType<Map<String, dynamic>>().toList();
       }
     } catch (_) {}
-    return const [];
+    return null;
   }
 
-  /// Serverens pris for en bookingkladde (samme beregning som ved betaling). null hvis Core ikke svarer.
+  /// Serverens pris for en bookingkladde (samme beregning som ved betaling).
+  /// null hvis Core ikke svarer, eller TideRMS ikke kan prissætte kladden (ok: false).
   Future<double?> quoteTotal(Map<String, dynamic> bookingDraft) async {
     try {
-      final res = await http
+      final res = await _client
           .post(Uri.parse('$baseUrl/pricing/calculate'), headers: {'Content-Type': 'application/json'}, body: jsonEncode(bookingDraft))
-          .timeout(const Duration(seconds: 6));
+          .timeout(const Duration(seconds: 8));
       if (res.statusCode == 200) {
         final body = jsonDecode(res.body) as Map<String, dynamic>;
+        if (body['ok'] == false) return null;
         final total = body['totalAmountDkk'] ?? (body['fareBreakdown'] as Map?)?['totalAmountDkk'];
         return (total as num?)?.toDouble();
       }
@@ -342,6 +454,7 @@ class ApiService {
     return null;
   }
 
+  /// Start checkout session: Core registers draft as PENDING and creates Nets session
   Future<CheckoutSession?> startCheckout(
     Map<String, dynamic> bookingDraft, {
     String? checkoutUrl,
@@ -353,7 +466,7 @@ class ApiService {
         'mode': 'hosted',
       };
 
-      final res = await http.post(
+      final res = await _client.post(
         Uri.parse('$baseUrl/integrations/payments/checkout'),
         headers: {
           'Content-Type': 'application/json',
@@ -373,7 +486,7 @@ class ApiService {
   /// Complete payment with Nets verification: Core marks booking CONFIRMED / PAID and returns booking + token
   Future<CompletedPaymentResult> completePayment(String paymentId) async {
     try {
-      final res = await http.post(
+      final res = await _client.post(
         Uri.parse('$baseUrl/integrations/payments/$paymentId/complete'),
         headers: {
           'Content-Type': 'application/json',
@@ -409,7 +522,7 @@ class ApiService {
   /// Abandon / cancel payment: Releases reserved capacity back to Core / TideRMS
   Future<bool> abandonPayment(String paymentId) async {
     try {
-      final res = await http.post(
+      final res = await _client.post(
         Uri.parse('$baseUrl/integrations/payments/$paymentId/abandon'),
         headers: {'Content-Type': 'application/json'},
       ).timeout(const Duration(seconds: 5));

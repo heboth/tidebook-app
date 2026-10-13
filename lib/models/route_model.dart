@@ -33,16 +33,17 @@ class RouteModel {
     final origin = json['originPort'] is Map ? json['originPort'] : {};
     final destination = json['destinationPort'] is Map ? json['destinationPort'] : {};
     return RouteModel(
+      // Kun Core's data – mangler et felt, står det tomt (ingen indbyggede havne eller distancer)
       id: json['id'] ?? '',
       name: json['name'] ?? '',
-      originPortCode: origin['code'] ?? 'DKCPH',
-      originPortName: origin['name'] ?? 'København Havn',
-      originTerminal: origin['terminal'] ?? 'DFDS Terminalen, Dampfærgevej 30',
-      destinationPortCode: destination['code'] ?? 'NOOSL',
-      destinationPortName: destination['name'] ?? 'Oslo Havn',
-      destinationTerminal: destination['terminal'] ?? 'Revierkaia / Vippetangen',
-      distanceNauticalMiles: (json['distanceNauticalMiles'] as num?)?.toDouble() ?? 274.0,
-      durationMinutes: json['standardDurationMinutes'] ?? 1050,
+      originPortCode: origin['code'] ?? '',
+      originPortName: origin['name'] ?? '',
+      originTerminal: origin['terminal'] ?? '',
+      destinationPortCode: destination['code'] ?? '',
+      destinationPortName: destination['name'] ?? '',
+      destinationTerminal: destination['terminal'] ?? '',
+      distanceNauticalMiles: (json['distanceNauticalMiles'] as num?)?.toDouble() ?? 0,
+      durationMinutes: (json['standardDurationMinutes'] as num?)?.toInt() ?? 0,
     );
   }
 
