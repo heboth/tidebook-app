@@ -243,6 +243,14 @@ void main() {
       expect(x2.decks, [9]);
     });
 
+    test('kategorier udsolgt i TideRMS vises ikke', () {
+      final cats = CabinModel.fromCoreCabins([
+        {'id': 'C1', 'category': 'E4', 'berths': 4, 'deck': 6, 'isBookedOnDeparture': false, 'soldOutInRms': true},
+        {'id': 'C2', 'category': 'B4', 'berths': 4, 'deck': 7, 'isBookedOnDeparture': false, 'soldOutInRms': false},
+      ]);
+      expect(cats.map((c) => c.category), ['B4']);
+    });
+
     test('prisberegning: TideRMS ok=false eller Core nede → ingen pris', () async {
       expect(await ApiService().quoteTotal({'departureId': 'D'}), isNull);
       ApiService.client = MockClient((_) async => http.Response('{"ok":false,"totalAmountDkk":0}', 200));

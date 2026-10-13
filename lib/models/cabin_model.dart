@@ -20,10 +20,11 @@ class CabinModel {
   int get freeCount => freeCabinIds.length;
 
   /// Grupperer Core's kahytter pr. kategori – kun ledige kahytter tæller med.
+  /// soldOutInRms: kategorien er udsolgt i TideRMS (blokke, grupper, låse), selv om kahytten er fysisk ledig.
   static List<CabinModel> fromCoreCabins(List<Map<String, dynamic>> cabins) {
     final byCategory = <String, List<Map<String, dynamic>>>{};
     for (final c in cabins) {
-      if (c['isBookedOnDeparture'] == true || c['isBooked'] == true) continue;
+      if (c['isBookedOnDeparture'] == true || c['isBooked'] == true || c['soldOutInRms'] == true) continue;
       final id = c['id']?.toString();
       final category = c['category']?.toString();
       if (id == null || id.isEmpty || category == null || category.isEmpty) continue;
