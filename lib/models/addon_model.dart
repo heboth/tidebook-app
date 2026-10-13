@@ -4,7 +4,8 @@ class AddOnModel {
   final String name;
   final String description;
 
-  /// Core's listepris (basePriceDkk). Den endelige pris beregnes af Core/TideRMS i prisberegningen.
+  /// Prisen på afgangen fra TideRMS (via Core's /departures/:id/availability). null = ukendt – katalogets
+  /// basePriceDkk er kun vejledende og vises aldrig som pris.
   final double? priceDkk;
   final String category;
   final bool isActive;
@@ -27,7 +28,7 @@ class AddOnModel {
       id: json['id']?.toString() ?? '',
       name: json['name']?.toString() ?? '',
       description: json['description']?.toString() ?? '',
-      priceDkk: (json['basePriceDkk'] as num?)?.toDouble(),
+      priceDkk: null,
       category: json['category']?.toString() ?? '',
       // Mangler feltet, regnes tilvalget ikke som aktivt
       isActive: json['isActive'] == true,
@@ -35,6 +36,12 @@ class AddOnModel {
       validTo: DateTime.tryParse(json['validTo']?.toString() ?? ''),
     );
   }
+
+  /// Samme tilvalg med prisen fra TideRMS.
+  AddOnModel withPrice(double? price) => AddOnModel(
+        id: id, name: name, description: description, priceDkk: price, category: category,
+        isActive: isActive, validFrom: validFrom, validTo: validTo,
+      );
 
   /// Aktivt og gyldigt på datoen (validTo gælder hele dagen).
   bool isAvailableOn(DateTime date) {
