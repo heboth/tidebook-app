@@ -10,6 +10,7 @@ import 'booking_wizard_screen.dart';
 import 'destination_guide_screen.dart';
 import 'login_screen.dart';
 import 'profile_screen.dart';
+import '../widgets/language_picker.dart';
 
 class ExploreScreen extends StatefulWidget {
   final void Function(int tabIndex)? onNavigateToTab;
@@ -205,6 +206,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
           errorBuilder: (ctx, err, stack) => const Text('Go Nordic Cruiseline'),
         ),
         actions: [
+          const LanguagePicker(),
           IconButton(
             icon: Icon(user != null ? Icons.account_circle : Icons.person_outline),
             tooltip: tr('explore.profileTooltip'),

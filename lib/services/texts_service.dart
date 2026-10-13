@@ -4,6 +4,7 @@ import 'dart:io' show Platform;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart' show rootBundle;
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 
 /// Appens tekster.
@@ -16,7 +17,8 @@ class TextsService {
   TextsService._();
   static final TextsService instance = TextsService._();
 
-  static const supported = ['da', 'en', 'no', 'sv', 'de', 'fr', 'es'];
+  /// Sprogene i appens sprogvælger (DK, NO, UK). Tekster på andre sprog i TideCMS bruges ikke.
+  static const supported = ['da', 'no', 'en'];
   static const _namespace = 'tidebookapp';
 
   /// Ændres, når brugeren skifter sprog – appen genopbygges da forfra. Tekster, der kommer fra TideCMS
@@ -28,6 +30,9 @@ class TextsService {
   String _language = 'da';
 
   String get language => _language;
+
+  /// Husker brugerens sprogvalg mellem app-starter. Kan udskiftes i tests.
+  LanguageStore store = SecureLanguageStore();
 
   static const _envUrl = String.fromEnvironment('TIDECMS_URL');
 
@@ -50,8 +55,10 @@ class TextsService {
   Future<void> init({String? language, Duration wait = const Duration(milliseconds: 1500)}) async {
     _bundled = jsonDecode(await rootBundle.loadString('assets/i18n/da.json')) as Map<String, dynamic>;
     _texts = _bundled;
+    // Rækkefølge: angivet sprog → brugerens gemte valg → enhedens sprog → dansk
+    final saved = await store.read();
     final device = PlatformDispatcher.instance.locale.languageCode;
-    _language = language ?? (supported.contains(device) ? device : 'da');
+    _language = language ?? (supported.contains(saved) ? saved! : supported.contains(device) ? device : 'da');
     final fetch = refresh();
     await Future.any([fetch, Future.delayed(wait)]);
   }
@@ -67,6 +74,7 @@ class TextsService {
   Future<void> setLanguage(String lang) async {
     if (!supported.contains(lang)) return;
     _language = lang;
+    await store.write(lang);
     _texts = _bundled;
     await refresh();
     revision.value++;
@@ -113,6 +121,37 @@ class TextsService {
       return {for (final e in base.entries) e.key: overlay(e.value, r[e.key])};
     }
     return base;
+  }
+}
+
+/// Gemmer det valgte sprog.
+abstract class LanguageStore {
+  Future<String?> read();
+  Future<void> write(String lang);
+}
+
+class SecureLanguageStore implements LanguageStore {
+  SecureLanguageStore([FlutterSecureStorage? storage]) : _storage = storage ?? const FlutterSecureStorage();
+
+  static const _key = 'tidebook.language';
+  final FlutterSecureStorage _storage;
+
+  @override
+  Future<String?> read() async {
+    try {
+      return await _storage.read(key: _key);
+    } catch (_) {
+      return null; // ingen lager (fx i tests): enhedens sprog bruges
+    }
+  }
+
+  @override
+  Future<void> write(String lang) async {
+    try {
+      await _storage.write(key: _key, value: lang);
+    } catch (_) {
+      // Kan valget ikke gemmes, gælder det stadig i denne session
+    }
   }
 }
 
