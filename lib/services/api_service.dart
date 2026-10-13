@@ -259,7 +259,9 @@ class ApiService {
   }
 
   /// Tilvalg fra Core (/api/addons) – kun aktive og gyldige på rejsedatoen. null hvis Core ikke kan nås.
-  Future<List<AddOnModel>?> fetchAddOns({DateTime? travelDate, bool? hasVehicle, int? passengerCount}) async {
+  /// Med [departureId] får hvert tilvalg sin pris på afgangen fra TideRMS (/departures/:id/availability), og tilvalg,
+  /// TideRMS har udsolgt, udelades. Uden pris (TideRMS svarer ikke) er priceDkk null – aldrig katalogets pris.
+  Future<List<AddOnModel>?> fetchAddOns({DateTime? travelDate, bool? hasVehicle, int? passengerCount, String? departureId}) async {
     try {
       final uri = Uri.parse('$baseUrl/addons').replace(queryParameters: {
         if (hasVehicle != null) 'hasVehicle': '$hasVehicle',
@@ -267,12 +269,31 @@ class ApiService {
       });
       final res = await _client.get(uri).timeout(const Duration(seconds: 5));
       if (res.statusCode == 200) {
-        final list = jsonDecode(res.body) as List;
-        return list
+        final list = (jsonDecode(res.body) as List)
             .whereType<Map<String, dynamic>>()
             .map(AddOnModel.fromJson)
             .where((a) => a.isAvailableOn(travelDate ?? DateTime.now()))
             .toList();
+        if (departureId == null) return list;
+        final prices = await _addOnPrices(departureId);
+        if (prices == null) return list;
+        return list
+            .where((a) => prices[a.id]?['soldOut'] != true)
+            .map((a) => a.withPrice((prices[a.id]?['adultDkk'] as num?)?.toDouble()))
+            .toList();
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  /// Tilvalgenes pris på afgangen fra TideRMS (via Core). null hvis Core ikke kan nås.
+  Future<Map<String, Map<String, dynamic>>?> _addOnPrices(String departureId) async {
+    try {
+      final res = await _client.get(Uri.parse('$baseUrl/departures/${Uri.encodeComponent(departureId)}/availability')).timeout(const Duration(seconds: 8));
+      if (res.statusCode == 200) {
+        final body = jsonDecode(res.body) as Map<String, dynamic>;
+        final p = body['addOnPrices'] as Map<String, dynamic>? ?? const {};
+        return p.map((k, v) => MapEntry(k, (v as Map).cast<String, dynamic>()));
       }
     } catch (_) {}
     return null;

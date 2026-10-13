@@ -222,7 +222,26 @@ void main() {
       });
       final list = await ApiService().fetchAddOns(travelDate: DateTime(2026, 10, 14));
       expect(list!.map((a) => a.id), ['addon-priority-boarding']);
-      expect(list.first.priceDkk, 180);
+      expect(list.first.priceDkk, isNull, reason: 'Katalogets basePriceDkk er ikke en pris');
+    });
+
+    test('tilvalg: pris på afgangen fra TideRMS (via Core); udsolgte udelades', () async {
+      ApiService.client = MockClient((req) async {
+        if (req.url.path == '/api/addons') {
+          return http.Response(jsonEncode([
+            {'id': 'addon-breakfast', 'name': 'Morgenmad', 'basePriceDkk': 125, 'isActive': true},
+            {'id': 'addon-dinner', 'name': 'Middag', 'basePriceDkk': 275, 'isActive': true},
+          ]), 200);
+        }
+        expect(req.url.path, '/api/departures/DEP-1/availability');
+        return http.Response(jsonEncode({'addOnPrices': {
+          'addon-breakfast': {'adultDkk': 149, 'childDkk': 149, 'soldOut': false},
+          'addon-dinner': {'adultDkk': null, 'childDkk': null, 'soldOut': true},
+        }}), 200);
+      });
+      final list = await ApiService().fetchAddOns(travelDate: DateTime(2026, 10, 14), departureId: 'DEP-1');
+      expect(list!.map((a) => a.id), ['addon-breakfast']);
+      expect(list.first.priceDkk, 149);
     });
 
     test('tilvalg: Core nede → null (fejltilstand), intet statisk katalog', () async {

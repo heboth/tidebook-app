@@ -190,6 +190,7 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
       travelDate: _departure?.scheduledDepartureTime,
       hasVehicle: false,
       passengerCount: 1,
+      departureId: _departure?.id,
     );
     if (!mounted) return;
     setState(() {
