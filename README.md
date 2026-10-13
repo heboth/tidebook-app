@@ -100,6 +100,25 @@ Eller programmatisk under runtime:
 ApiService.setBaseUrl('https://api.gonordic.dk');
 ```
 
+### Miljøvariabler
+
+Tide-suiten deler én miljøfil: `.env` i mappen med alle repoerne (fx `/Volumes/T9/Development/.env`, oprettes med
+`npm run env:init` i TideBook – alle variabler i `TideBook/config/tide.env.example`). Appen læser kun to adresser:
+
+| Fælles navn | dart-define i appen |
+|---|---|
+| `TIDE_CORE_URL` | `TIDEBOOK_API_URL` (`/api` tilføjes automatisk) |
+| `TIDE_CMS_URL` | `TIDECMS_URL` |
+
+```bash
+tool/run.sh                 # flutter run med adresserne fra den fælles fil
+tool/run.sh build ios       # flutter build ios med de samme adresser
+```
+
+`tool/run.sh` læser kun de to nøgler – brug aldrig `--dart-define-from-file` med den fælles fil, for så bliver alle
+dens hemmeligheder bygget ind i appen. localhost-adresser gives ikke videre (appens standarder klarer både
+iOS-simulatoren og Android-emulatorens 10.0.2.2), og `TIDEBOOK_API_URL`/`TIDECMS_URL` sat i miljøet vinder.
+
 ### Kørsel
 ```bash
 # Kør på tilsluttet enhed eller simulator
