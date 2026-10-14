@@ -458,6 +458,31 @@ class ApiService {
     return null;
   }
 
+  /// Partnerbilletter: ledige tidspunkter og priser for en dato (Core spørger partneren).
+  Future<PartnerAvailability> partnerAvailability(String addOnId, String date) async {
+    final res = await _client
+        .get(Uri.parse('$baseUrl/addons/${Uri.encodeComponent(addOnId)}/availability?date=$date'))
+        .timeout(const Duration(seconds: 8));
+    final body = jsonDecode(res.body);
+    if (res.statusCode != 200 || body is! Map<String, dynamic>) throw PartnerException(body is Map ? '${body['message'] ?? body['error'] ?? res.statusCode}' : '${res.statusCode}');
+    return PartnerAvailability.fromJson(body);
+  }
+
+  /// Partnerbilletter: tilbud fra Core (gælder i 15 minutter); bookingen henviser til det med quoteId.
+  Future<PartnerQuote> partnerQuote(String addOnId, {required String date, String? time, required Map<String, int> tickets}) async {
+    final res = await _client
+        .post(Uri.parse('$baseUrl/addons/quote'), headers: {'Content-Type': 'application/json'}, body: jsonEncode({
+          'productId': addOnId,
+          'visitDate': date,
+          'visitTime': ?time,
+          'tickets': tickets.entries.where((e) => e.value > 0).map((e) => {'type': e.key, 'quantity': e.value}).toList(),
+        }))
+        .timeout(const Duration(seconds: 8));
+    final body = jsonDecode(res.body);
+    if (res.statusCode != 200 || body is! Map<String, dynamic>) throw PartnerException(body is Map ? '${body['message'] ?? body['error'] ?? res.statusCode}' : '${res.statusCode}');
+    return PartnerQuote.fromJson(body);
+  }
+
   /// Serverens pris for en bookingkladde (samme beregning som ved betaling).
   /// null hvis Core ikke svarer, eller TideRMS ikke kan prissætte kladden (ok: false).
   Future<double?> quoteTotal(Map<String, dynamic> bookingDraft) async => (await quote(bookingDraft))?.total;
@@ -594,5 +619,59 @@ class InsuranceOffer {
         premiumRefundable: j['premiumRefundable'] == true,
         termsUrl: j['termsUrl'] as String?,
         description: j['description'] as String?,
+      );
+}
+
+class PartnerException implements Exception {
+  final String message;
+  PartnerException(this.message);
+  @override
+  String toString() => message;
+}
+
+/// Ét tidspunkt hos partneren (time = null: hele dagen) med ledige pladser og pris pr. billettype.
+class PartnerSlot {
+  final String? time;
+  final int remaining;
+  final Map<String, double> prices;
+  final Map<String, String> labels;
+  const PartnerSlot({this.time, required this.remaining, required this.prices, required this.labels});
+}
+
+class PartnerAvailability {
+  final bool requiresTime;
+  final List<PartnerSlot> slots;
+  final bool simulated;
+  const PartnerAvailability({required this.requiresTime, required this.slots, this.simulated = false});
+
+  factory PartnerAvailability.fromJson(Map<String, dynamic> j) => PartnerAvailability(
+        requiresTime: j['requiresTime'] == true,
+        simulated: j['simulated'] == true,
+        slots: ((j['slots'] as List?) ?? const []).whereType<Map>().map((s) {
+          final prices = <String, double>{};
+          final labels = <String, String>{};
+          for (final p in ((s['prices'] as List?) ?? const []).whereType<Map>()) {
+            prices['${p['type']}'] = (p['amount'] as num?)?.toDouble() ?? 0;
+            labels['${p['type']}'] = '${p['label'] ?? p['type']}';
+          }
+          return PartnerSlot(time: s['time'] as String?, remaining: (s['remaining'] as num?)?.toInt() ?? 0, prices: prices, labels: labels);
+        }).toList(),
+      );
+}
+
+class PartnerQuote {
+  final String quoteId;
+  final String visitDate;
+  final String? visitTime;
+  final double totalPriceDkk;
+  final String? notes;
+  const PartnerQuote({required this.quoteId, required this.visitDate, this.visitTime, required this.totalPriceDkk, this.notes});
+
+  factory PartnerQuote.fromJson(Map<String, dynamic> j) => PartnerQuote(
+        quoteId: '${j['quoteId']}',
+        visitDate: '${j['visitDate']}',
+        visitTime: j['visitTime'] as String?,
+        totalPriceDkk: (j['totalPriceDkk'] as num?)?.toDouble() ?? 0,
+        notes: j['notes'] as String?,
       );
 }

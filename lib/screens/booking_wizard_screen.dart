@@ -9,6 +9,8 @@ import '../services/api_service.dart';
 
 import '../services/booking_service.dart';
 import '../services/texts_service.dart';
+import '../utils/port_time.dart';
+import '../widgets/partner_ticket_sheet.dart';
 import '../theme/gonordic_theme.dart';
 import '../widgets/cabin_card.dart';
 import 'boarding_pass_screen.dart';
@@ -221,6 +223,9 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
 
   /// Prisen fra Core for det valgte (samme beregning som beløbet hos Nets). Appen beregner ingen pris selv.
   double? _serverTotal;
+  /// Partnerbilletter (Tivoli, LEGOLAND): dato, tidspunkt og Core's tilbud pr. produkt
+  final Map<String, PartnerSelection> _partner = {};
+
   /// Afbestillingsforsikringen fra TideRMS (via Core) og kundens valg
   InsuranceOffer? _insuranceOffer;
   bool _withInsurance = false;
@@ -257,7 +262,7 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
       'termsAccepted': true,
       'routeId': dep.routeId,
       'departureId': dep.id,
-      'outboundDate': dep.scheduledDepartureTime.toIso8601String().split('T')[0],
+      'outboundDate': dep.portDate,
       'ticketClass': 'PREMIUM',
       'passengers': [
         {
@@ -278,7 +283,12 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
       },
       'selectedCabinIds': [?cabinId],
       'cabinIds': [?cabinId], // prisberegningen (/pricing/calculate) bruger cabinIds
-      'addOns': _addons.entries.map((e) => {'id': e.key, 'quantity': e.value}).toList(),
+      'addOns': [
+        ..._addons.entries.map((e) => {'id': e.key, 'quantity': e.value}),
+        // Partnerbilletter: prisen er Core's tilbud (quoteId) – den lægges i prisen, og Core reserverer og udsteder billetterne
+        ..._partner.values.map((p) => {'id': p.addOn.id, 'quantity': 1, 'quoteId': p.quote.quoteId}),
+      ],
+      'dynamicAddOns': _partner.values.map((p) => {'quoteId': p.quote.quoteId}).toList(),
       // Afbestillingsforsikring: prisen sættes af TideRMS; Core gemmer den på bookingen
       'withCancellationInsurance': _withInsurance && _insuranceOffer != null,
     };
@@ -322,6 +332,12 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
     final firstName = nameParts.first;
     final lastName = nameParts.sublist(1).join(' ');
 
+    if (!await _refreshPartnerQuotes()) {
+      if (!mounted) return;
+      setState(() => _isProcessingPayment = false);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(backgroundColor: GoNordicTheme.error, content: Text(tr('bookingWizard.partner.expired'))));
+      return;
+    }
     final draft = _buildDraft(dep, firstName: firstName, lastName: lastName, name: name, email: email, phone: phone);
 
     final session = await ApiService().startCheckout(draft);
@@ -429,6 +445,56 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
     return const SizedBox.shrink();
   }
 
+  /// Partnerbillet (fx Tivoli): vælges med dato, tidspunkt og antal i et ark – prisen kommer fra partneren via Core.
+  Widget _partnerTile(AddOnModel a) {
+    final sel = _partner[a.id];
+    return Card(
+      key: Key('wizard-partner-${a.id}'),
+      child: ListTile(
+        title: Text(a.name),
+        subtitle: sel == null
+            ? (a.partnerName.isEmpty ? null : Text(tr('bookingWizard.partner.partner', {'name': a.partnerName})))
+            : Text(tr('bookingWizard.partner.summary', {'date': sel.date, 'time': sel.time == null ? '' : ' ${sel.time}', 'count': sel.ticketCount, 'amount': sel.quote.totalPriceDkk.round()})),
+        trailing: TextButton(
+          onPressed: () => _openPartnerSheet(a),
+          child: Text(sel == null ? tr('bookingWizard.partner.choose') : tr('bookingWizard.partner.change')),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openPartnerSheet(AddOnModel a) async {
+    final dep = _departure;
+    final result = await showModalBottomSheet<Object?>(
+      context: context,
+      isScrollControlled: true,
+      builder: (_) => PartnerTicketSheet(addOn: a, initialDate: dep?.portDate ?? DateTime.now().toIso8601String().split('T').first, current: _partner[a.id]),
+    );
+    if (!mounted) return;
+    if (result is PartnerSelection) {
+      setState(() => _partner[a.id] = result);
+      _refreshQuote();
+    } else if (result == false) {
+      setState(() => _partner.remove(a.id));
+      _refreshQuote();
+    }
+  }
+
+  /// Tilbuddet fra partneren gælder 15 minutter: er det ældre end 12, hentes et nyt med samme valg før betaling.
+  Future<bool> _refreshPartnerQuotes() async {
+    for (final entry in _partner.entries.toList()) {
+      final p = entry.value;
+      if (DateTime.now().difference(p.quotedAt).inMinutes < 12) continue;
+      try {
+        final q = await ApiService().partnerQuote(p.addOn.id, date: p.date, time: p.time, tickets: p.tickets);
+        _partner[entry.key] = PartnerSelection(addOn: p.addOn, date: p.date, time: p.time, tickets: p.tickets, quote: q, quotedAt: DateTime.now());
+      } catch (_) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   /// Afbestillingsforsikring som tilvalg – kun når TideRMS har en til rejsen.
   Widget _insuranceTile() {
     final o = _insuranceOffer;
@@ -520,7 +586,7 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
                 emptyText: tr('bookingWizard.step1.noDepartures'),
               );
             }
-            final t = dep.scheduledDepartureTime.toLocal();
+            final t = portTime(dep.scheduledDepartureTime); // havnens tid, ikke telefonens
             return Padding(
               padding: const EdgeInsets.only(bottom: 12),
               child: Text(
@@ -604,7 +670,7 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
             emptyText: catalog == null ? null : tr('bookingWizard.step3.none'),
           )
         else
-          ...catalog.map((a) => Card(
+          ...catalog.map((a) => a.isPartner ? _partnerTile(a) : Card(
             child: CheckboxListTile(
               title: Text(a.name),
               subtitle: a.priceDkk == null ? null : Text(tr('bookingWizard.step3.price', {'amount': a.priceDkk!.round()})),
