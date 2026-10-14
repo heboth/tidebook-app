@@ -146,6 +146,15 @@
     "quote": {
       "loading": "Beregner pris…",
       "failed": "Prisen kunne ikke beregnes. Prøv igen."
+    },
+    "insurance": {
+      "title": "Afbestillingsforsikring fra {provider}",
+      "price": "{amount} kr.",
+      "lead": "Få pengene tilbage, hvis du bliver forhindret i at rejse (fx ved sygdom).",
+      "percent": "{percent} % af rejsens pris",
+      "perPerson": "pr. person",
+      "notRefundable": "Præmien refunderes ikke, hvis bookingen afbestilles.",
+      "terms": "Forsikringsbetingelser"
     }
   },
   "myBookings": {

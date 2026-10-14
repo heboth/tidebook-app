@@ -460,7 +460,10 @@ class ApiService {
 
   /// Serverens pris for en bookingkladde (samme beregning som ved betaling).
   /// null hvis Core ikke svarer, eller TideRMS ikke kan prissætte kladden (ok: false).
-  Future<double?> quoteTotal(Map<String, dynamic> bookingDraft) async {
+  Future<double?> quoteTotal(Map<String, dynamic> bookingDraft) async => (await quote(bookingDraft))?.total;
+
+  /// Serverens pris og den afbestillingsforsikring, der kan vælges til (null hvis prisen ikke kan beregnes).
+  Future<PriceQuote?> quote(Map<String, dynamic> bookingDraft) async {
     try {
       final res = await _client
           .post(Uri.parse('$baseUrl/pricing/calculate'), headers: {'Content-Type': 'application/json'}, body: jsonEncode(bookingDraft))
@@ -469,7 +472,9 @@ class ApiService {
         final body = jsonDecode(res.body) as Map<String, dynamic>;
         if (body['ok'] == false) return null;
         final total = body['totalAmountDkk'] ?? (body['fareBreakdown'] as Map?)?['totalAmountDkk'];
-        return (total as num?)?.toDouble();
+        if (total is! num) return null;
+        final offer = body['insuranceOffer'];
+        return PriceQuote(total: total.toDouble(), insuranceOffer: offer is Map<String, dynamic> ? InsuranceOffer.fromJson(offer) : null);
       }
     } catch (_) {}
     return null;
@@ -553,4 +558,41 @@ class ApiService {
       return false;
     }
   }
+}
+
+/// Serverens pris for en bookingkladde.
+class PriceQuote {
+  final double total;
+  /// Afbestillingsforsikringen, kunden kan vælge til (null = ingen til rejsen)
+  final InsuranceOffer? insuranceOffer;
+  const PriceQuote({required this.total, this.insuranceOffer});
+}
+
+/// Afbestillingsforsikring (opsat i TideRMS, fx Tryg): fast beløb eller procent af rejsens pris.
+class InsuranceOffer {
+  final String code;
+  final String name;
+  final String provider;
+  final double priceDkk;
+  final String priceType;
+  final double? percent;
+  final String? per;
+  final bool premiumRefundable;
+  final String? termsUrl;
+  final String? description;
+
+  const InsuranceOffer({required this.code, required this.name, required this.provider, required this.priceDkk, required this.priceType, this.percent, this.per, required this.premiumRefundable, this.termsUrl, this.description});
+
+  factory InsuranceOffer.fromJson(Map<String, dynamic> j) => InsuranceOffer(
+        code: '${j['code'] ?? ''}',
+        name: '${j['name'] ?? ''}',
+        provider: '${j['provider'] ?? ''}',
+        priceDkk: (j['priceDkk'] as num?)?.toDouble() ?? 0,
+        priceType: '${j['priceType'] ?? 'FIXED'}',
+        percent: (j['percent'] as num?)?.toDouble(),
+        per: j['per'] as String?,
+        premiumRefundable: j['premiumRefundable'] == true,
+        termsUrl: j['termsUrl'] as String?,
+        description: j['description'] as String?,
+      );
 }
