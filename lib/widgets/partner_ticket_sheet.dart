@@ -102,6 +102,12 @@ class _PartnerTicketSheetState extends State<PartnerTicketSheet> {
     }
   }
 
+  String _typeLabel(String type, PartnerSlot slot) {
+    final key = 'bookingWizard.partner.types.$type';
+    final text = tr(key);
+    return text == key ? (slot.labels[type] ?? type) : text;
+  }
+
   PartnerSlot? get _slot {
     final a = _availability;
     if (a == null || a.slots.isEmpty) return null;
@@ -154,7 +160,13 @@ class _PartnerTicketSheetState extends State<PartnerTicketSheet> {
                   children: a.slots.map((s) => ChoiceChip(
                         key: Key('partner-time-${s.time}'),
                         selected: s.time == _time,
-                        selectedColor: GoNordicTheme.pine.withValues(alpha: 0.2),
+                        // Valgt tidspunkt: hvid tekst på mørk grøn (tydelig kontrast); udsolgt: grå
+                        selectedColor: GoNordicTheme.pine,
+                        checkmarkColor: Colors.white,
+                        labelStyle: TextStyle(
+                          color: s.time == _time ? Colors.white : (s.remaining > 0 ? GoNordicTheme.pine : GoNordicTheme.textSecondary),
+                          fontWeight: s.time == _time ? FontWeight.bold : FontWeight.normal,
+                        ),
                         label: Text('${s.time} · ${s.remaining > 0 ? tr('bookingWizard.partner.remaining', {'count': s.remaining}) : tr('bookingWizard.partner.soldOut')}'),
                         onSelected: s.remaining > 0
                             ? (_) {
@@ -169,7 +181,8 @@ class _PartnerTicketSheetState extends State<PartnerTicketSheet> {
               if (slot != null)
                 ..._types.where((t) => slot.prices.containsKey(t)).map((t) => Row(
                       children: [
-                        Expanded(child: Text('${slot.labels[t] ?? t} · ${slot.prices[t]!.round()} DKK')),
+                        // Appens egen (oversatte) betegnelse – partnerens kan være på et andet sprog
+                        Expanded(child: Text('${_typeLabel(t, slot)} · ${slot.prices[t]!.round()} DKK')),
                         IconButton(
                           key: Key('partner-minus-$t'),
                           icon: const Icon(Icons.remove_circle_outline),
@@ -192,7 +205,7 @@ class _PartnerTicketSheetState extends State<PartnerTicketSheet> {
                       ],
                     )),
               if (_error != null) Padding(padding: const EdgeInsets.only(top: 8), child: Text(_error!, style: const TextStyle(color: GoNordicTheme.error, fontSize: 12))),
-              if (_quote?.notes != null) Padding(padding: const EdgeInsets.only(top: 8), child: Text(_quote!.notes!, style: const TextStyle(fontSize: 11, color: GoNordicTheme.textSecondary))),
+              if (_quote?.simulated == true) Padding(padding: const EdgeInsets.only(top: 8), child: Text(tr('bookingWizard.partner.demo'), style: const TextStyle(fontSize: 11, color: GoNordicTheme.textSecondary))),
               const SizedBox(height: 8),
               Text(tr('bookingWizard.partner.issuedLater'), style: const TextStyle(fontSize: 11, color: GoNordicTheme.textSecondary)),
               const SizedBox(height: 12),

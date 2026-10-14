@@ -172,7 +172,14 @@
       "remove": "Fjern",
       "issuedLater": "Billetterne med stregkoder udstedes af partneren, når betalingen er gennemført.",
       "summary": "{date}{time} · {count} billetter · {amount} DKK",
-      "expired": "Prisen på partnerbilletterne kunne ikke bekræftes – vælg dem igen."
+      "expired": "Prisen på partnerbilletterne kunne ikke bekræftes – vælg dem igen.",
+      "types": {
+        "ADULT": "Voksen",
+        "CHILD": "Barn",
+        "SENIOR": "Pensionist",
+        "FAMILY_GROUP": "Familie (2+2)"
+      },
+      "demo": "DEMO – simuleret partnerpris, ikke fra partneren."
     }
   },
   "myBookings": {

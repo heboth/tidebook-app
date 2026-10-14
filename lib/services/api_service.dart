@@ -665,7 +665,9 @@ class PartnerQuote {
   final String? visitTime;
   final double totalPriceDkk;
   final String? notes;
-  const PartnerQuote({required this.quoteId, required this.visitDate, this.visitTime, required this.totalPriceDkk, this.notes});
+  /// Prisen kommer fra den simulerede test-partner (demo), ikke fra den rigtige partner
+  final bool simulated;
+  const PartnerQuote({required this.quoteId, required this.visitDate, this.visitTime, required this.totalPriceDkk, this.notes, this.simulated = false});
 
   factory PartnerQuote.fromJson(Map<String, dynamic> j) => PartnerQuote(
         quoteId: '${j['quoteId']}',
@@ -673,5 +675,6 @@ class PartnerQuote {
         visitTime: j['visitTime'] as String?,
         totalPriceDkk: (j['totalPriceDkk'] as num?)?.toDouble() ?? 0,
         notes: j['notes'] as String?,
+        simulated: j['simulated'] == true,
       );
 }
