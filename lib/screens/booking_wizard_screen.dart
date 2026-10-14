@@ -221,6 +221,9 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
 
   /// Prisen fra Core for det valgte (samme beregning som beløbet hos Nets). Appen beregner ingen pris selv.
   double? _serverTotal;
+  /// Afbestillingsforsikringen fra TideRMS (via Core) og kundens valg
+  InsuranceOffer? _insuranceOffer;
+  bool _withInsurance = false;
   bool _quoteLoading = false;
   bool _quoteFailed = false;
   int _quoteSeq = 0;
@@ -235,12 +238,16 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
       _quoteFailed = false;
     });
     final draft = _buildDraft(dep, firstName: 'Pris', lastName: 'Beregning', name: _nameCtrl.text, email: _emailCtrl.text, phone: _phoneCtrl.text);
-    final total = await ApiService().quoteTotal(draft);
+    final quote = await ApiService().quote(draft);
     if (!mounted || seq != _quoteSeq) return; // et nyere valg er på vej
     setState(() {
       _quoteLoading = false;
-      _serverTotal = total;
-      _quoteFailed = total == null;
+      _serverTotal = quote?.total;
+      _quoteFailed = quote == null;
+      if (quote != null) {
+        _insuranceOffer = quote.insuranceOffer;
+        if (_insuranceOffer == null) _withInsurance = false;
+      }
     });
   }
 
@@ -272,6 +279,8 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
       'selectedCabinIds': [?cabinId],
       'cabinIds': [?cabinId], // prisberegningen (/pricing/calculate) bruger cabinIds
       'addOns': _addons.entries.map((e) => {'id': e.key, 'quantity': e.value}).toList(),
+      // Afbestillingsforsikring: prisen sættes af TideRMS; Core gemmer den på bookingen
+      'withCancellationInsurance': _withInsurance && _insuranceOffer != null,
     };
   }
 
@@ -418,6 +427,39 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
       );
     }
     return const SizedBox.shrink();
+  }
+
+  /// Afbestillingsforsikring som tilvalg – kun når TideRMS har en til rejsen.
+  Widget _insuranceTile() {
+    final o = _insuranceOffer;
+    if (o == null) return const SizedBox.shrink();
+    final details = [
+      (o.description?.isNotEmpty ?? false) ? o.description! : tr('bookingWizard.insurance.lead'),
+      if (o.priceType == 'PERCENT' && o.percent != null) tr('bookingWizard.insurance.percent', {'percent': o.percent! % 1 == 0 ? o.percent!.round() : o.percent!}),
+      if (o.priceType == 'FIXED' && o.per == 'PERSON') tr('bookingWizard.insurance.perPerson'),
+      if (!o.premiumRefundable) tr('bookingWizard.insurance.notRefundable'),
+    ].join(' · ');
+    return Card(
+      key: const Key('wizard-insurance'),
+      child: CheckboxListTile(
+        value: _withInsurance,
+        activeColor: GoNordicTheme.pine,
+        title: Text(tr('bookingWizard.insurance.title', {'provider': o.provider})),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(tr('bookingWizard.insurance.price', {'amount': o.priceDkk.toStringAsFixed(o.priceDkk % 1 == 0 ? 0 : 2).replaceAll('.', ',')}), style: const TextStyle(fontWeight: FontWeight.bold, color: GoNordicTheme.pine)),
+            Text(details, style: const TextStyle(fontSize: 11)),
+            if (o.termsUrl != null && o.termsUrl!.isNotEmpty)
+              Text('${tr('bookingWizard.insurance.terms')}: ${o.termsUrl}', style: const TextStyle(fontSize: 11, color: GoNordicTheme.teal)),
+          ],
+        ),
+        onChanged: (v) {
+          setState(() => _withInsurance = v == true);
+          _refreshQuote();
+        },
+      ),
+    );
   }
 
   /// Prisen fra Core – vises kun, når serveren har beregnet den.
@@ -727,6 +769,8 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
             ),
           ),
         ),
+        const SizedBox(height: 8),
+        _insuranceTile(),
         const SizedBox(height: 8),
         // Kun Core's pris vises; uden pris kan der ikke betales
         _quoteView(),
