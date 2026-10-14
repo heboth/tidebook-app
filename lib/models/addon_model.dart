@@ -12,6 +12,10 @@ class AddOnModel {
   final DateTime? validFrom;
   final DateTime? validTo;
 
+  /// Partnerbillet (fx Tivoli, LEGOLAND): prisen afhænger af dato og evt. tidspunkt og kommer fra partneren
+  final bool isPartner;
+  final String partnerName;
+
   const AddOnModel({
     required this.id,
     required this.name,
@@ -21,6 +25,8 @@ class AddOnModel {
     this.isActive = true,
     this.validFrom,
     this.validTo,
+    this.isPartner = false,
+    this.partnerName = '',
   });
 
   factory AddOnModel.fromJson(Map<String, dynamic> json) {
@@ -34,13 +40,15 @@ class AddOnModel {
       isActive: json['isActive'] == true,
       validFrom: DateTime.tryParse(json['validFrom']?.toString() ?? ''),
       validTo: DateTime.tryParse(json['validTo']?.toString() ?? ''),
+      isPartner: json['pricingModel'] == 'DYNAMIC_API',
+      partnerName: (json['externalProviderConfig'] as Map?)?['partnerName']?.toString() ?? '',
     );
   }
 
   /// Samme tilvalg med prisen fra TideRMS.
   AddOnModel withPrice(double? price) => AddOnModel(
         id: id, name: name, description: description, priceDkk: price, category: category,
-        isActive: isActive, validFrom: validFrom, validTo: validTo,
+        isActive: isActive, validFrom: validFrom, validTo: validTo, isPartner: isPartner, partnerName: partnerName,
       );
 
   /// Aktivt og gyldigt på datoen (validTo gælder hele dagen).

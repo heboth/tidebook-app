@@ -155,6 +155,24 @@
       "perPerson": "pr. person",
       "notRefundable": "Præmien refunderes ikke, hvis bookingen afbestilles.",
       "terms": "Forsikringsbetingelser"
+    },
+    "partner": {
+      "choose": "Vælg dato og billetter",
+      "change": "Ret",
+      "partner": "Partner: {name}",
+      "date": "Dato for besøg",
+      "loadingTimes": "Henter ledige tidspunkter…",
+      "closed": "Lukket på den valgte dato – vælg en anden dag.",
+      "chooseTime": "Vælg tidspunkt for indgang",
+      "remaining": "{count} ledige",
+      "soldOut": "udsolgt",
+      "loadingPrice": "Henter pris…",
+      "total": "I alt {amount} DKK",
+      "add": "Tilføj",
+      "remove": "Fjern",
+      "issuedLater": "Billetterne med stregkoder udstedes af partneren, når betalingen er gennemført.",
+      "summary": "{date}{time} · {count} billetter · {amount} DKK",
+      "expired": "Prisen på partnerbilletterne kunne ikke bekræftes – vælg dem igen."
     }
   },
   "myBookings": {

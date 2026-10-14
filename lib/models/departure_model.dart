@@ -1,3 +1,5 @@
+import '../utils/port_time.dart';
+
 class DepartureModel {
   final String id;
   final String routeId;
@@ -19,20 +21,16 @@ class DepartureModel {
     required this.checkInOpen,
   });
 
-  String get timeFormatted {
-    final hour = scheduledDepartureTime.hour.toString().padLeft(2, '0');
-    final minute = scheduledDepartureTime.minute.toString().padLeft(2, '0');
-    return '$hour:$minute';
-  }
+  /// Afgangstid i havnens tid (ikke telefonens tidszone)
+  String get timeFormatted => portClock(scheduledDepartureTime);
 
-  String get arrivalTimeFormatted {
-    final hour = scheduledArrivalTime.hour.toString().padLeft(2, '0');
-    final minute = scheduledArrivalTime.minute.toString().padLeft(2, '0');
-    return '$hour:$minute';
-  }
+  String get arrivalTimeFormatted => portClock(scheduledArrivalTime);
+
+  /// Afgangsdato (YYYY-MM-DD) i havnens tid
+  String get portDate => portIsoDate(scheduledDepartureTime);
 
   String get dateFormatted {
-    final d = scheduledDepartureTime;
+    final d = portTime(scheduledDepartureTime);
     return '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}-${d.year}';
   }
 
