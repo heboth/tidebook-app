@@ -15,8 +15,8 @@ void main() {
   setUp(() => TextsService.instance.load(bundled));
 
   test('links peger på bookingsitets privatlivs- og betingelsesside (dev-adresse uden define)', () {
-    expect(SiteLinks.privacyPolicy.toString(), endsWith('/?view=privatliv'));
-    expect(SiteLinks.terms.toString(), endsWith('/?view=betingelser'));
+    expect(SiteLinks.privacyPolicy.toString(), 'https://tidebook.ceniconsulting.dk/?view=privatliv&embed=1');
+    expect(SiteLinks.terms.toString(), 'https://tidebook.ceniconsulting.dk/?view=betingelser&embed=1');
     expect(SiteLinks.marketingConsentVersion, 'marketing-v1');
   });
 
