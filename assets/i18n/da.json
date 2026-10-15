@@ -180,6 +180,14 @@
         "FAMILY_GROUP": "Familie (2+2)"
       },
       "demo": "DEMO – simuleret partnerpris, ikke fra partneren."
+    },
+    "consent": {
+      "termsAccept": "Jeg har læst og accepterer Go Nordic Cruiselines rejsebetingelser (version {version}). *",
+      "readTerms": "Læs rejsebetingelserne",
+      "termsRequired": "Du skal acceptere rejsebetingelserne, før du kan betale.",
+      "marketing": "Ja tak, send mig tilbud og nyheder på e-mail",
+      "marketingHint": "Frivilligt og uden betydning for din booking. Du kan altid afmelde dig igen.",
+      "privacyLink": "Sådan behandler vi dine personoplysninger (privatlivspolitik)"
     }
   },
   "myBookings": {
@@ -364,5 +372,11 @@
   "config": {
     "title": "Appen er ikke konfigureret",
     "body": "Denne build mangler adressen på TideBook Core. Byg appen med --dart-define={keys}."
+  },
+  "legal": {
+    "privacyPolicy": "Privatlivspolitik",
+    "privacyPolicySubtitle": "Sådan behandler vi dine personoplysninger, og dine rettigheder",
+    "terms": "Rejsebetingelser",
+    "unavailable": "Siden kan ikke vises – bookingsitets adresse er ikke sat i denne app."
   }
 }

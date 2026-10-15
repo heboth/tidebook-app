@@ -4,6 +4,7 @@ import '../services/auth_service.dart';
 import '../services/texts_service.dart';
 import '../theme/gonordic_theme.dart';
 import 'login_screen.dart';
+import 'site_page_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -109,6 +110,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       child: Text(tr('profile.loginOrCreate')),
                     ),
                   ),
+                  const SizedBox(height: 12),
+                  const PrivacyPolicyTile(),
                 ],
               ),
             ),
@@ -205,6 +208,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ),
           ),
+          const SizedBox(height: 10),
+          const PrivacyPolicyTile(),
         ],
       ),
     );
