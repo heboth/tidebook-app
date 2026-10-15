@@ -15,6 +15,8 @@ import '../theme/gonordic_theme.dart';
 import '../widgets/cabin_card.dart';
 import 'boarding_pass_screen.dart';
 import 'login_screen.dart';
+import 'site_page_screen.dart';
+import '../services/site_links.dart';
 
 class BookingWizardScreen extends StatefulWidget {
   final String? initialRouteId;
@@ -220,6 +222,9 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
   }
 
   bool _isProcessingPayment = false;
+  // Rejsebetingelserne skal accepteres aktivt; samtykke til markedsføring er frivilligt – intet er forudvalgt
+  bool _termsAccepted = false;
+  bool _marketingConsent = false;
 
   /// Prisen fra Core for det valgte (samme beregning som beløbet hos Nets). Appen beregner ingen pris selv.
   double? _serverTotal;
@@ -259,7 +264,11 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
   Map<String, dynamic> _buildDraft(DepartureModel dep, {required String firstName, required String lastName, required String name, required String email, required String phone}) {
     final cabinId = _cabin?.cabinId;
     return {
-      'termsAccepted': true,
+      // Kun versionen og kundens egen afkrydsning – Core sætter tidspunktet for accepten
+      'terms_version_id': SiteLinks.termsVersionId,
+      'termsAccepted': _termsAccepted,
+      // Frivilligt samtykke til tilbud og nyheder på e-mail – Core sætter tidspunkt og IP
+      'marketingConsent': {'consented': _marketingConsent, 'consentVersion': SiteLinks.marketingConsentVersion},
       'routeId': dep.routeId,
       'departureId': dep.id,
       'outboundDate': dep.portDate,
@@ -316,6 +325,12 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
     if (_gender == null || _nationality == null || _birthDate == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(tr('bookingWizard.missingPassengerDetails'))),
+      );
+      return;
+    }
+    if (!_termsAccepted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(tr('bookingWizard.consent.termsRequired'))),
       );
       return;
     }
@@ -840,9 +855,11 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
         const SizedBox(height: 8),
         // Kun Core's pris vises; uden pris kan der ikke betales
         _quoteView(),
+        const SizedBox(height: 8),
+        _consentCard(),
         const SizedBox(height: 10),
         ElevatedButton(
-          onPressed: _isProcessingPayment || _serverTotal == null ? null : _startPaymentFlow,
+          onPressed: _isProcessingPayment || _serverTotal == null || !_termsAccepted ? null : _startPaymentFlow,
           child: _isProcessingPayment
               ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
               : Text(tr('bookingWizard.step4.continueToPayment')),
@@ -850,6 +867,53 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
       ],
     );
   }
+
+  /// Accept af rejsebetingelserne (påkrævet) og samtykke til markedsføring (frivilligt) – ingen er forudvalgt.
+  Widget _consentCard() => Card(
+    child: Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          CheckboxListTile(
+            key: const Key('wizard-terms'),
+            value: _termsAccepted,
+            onChanged: (v) => setState(() => _termsAccepted = v ?? false),
+            controlAffinity: ListTileControlAffinity.leading,
+            dense: true,
+            title: Text(tr('bookingWizard.consent.termsAccept', {'version': SiteLinks.termsVersionId}), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+            subtitle: Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton(
+                key: const Key('wizard-terms-link'),
+                style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: const Size(0, 32), tapTargetSize: MaterialTapTargetSize.shrinkWrap),
+                onPressed: () => SitePageScreen.openTerms(context),
+                child: Text(tr('bookingWizard.consent.readTerms'), style: const TextStyle(fontSize: 12, decoration: TextDecoration.underline)),
+              ),
+            ),
+          ),
+          CheckboxListTile(
+            key: const Key('wizard-marketing-consent'),
+            value: _marketingConsent,
+            onChanged: (v) => setState(() => _marketingConsent = v ?? false),
+            controlAffinity: ListTileControlAffinity.leading,
+            dense: true,
+            title: Text(tr('bookingWizard.consent.marketing'), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+            subtitle: Text(tr('bookingWizard.consent.marketingHint'), style: const TextStyle(fontSize: 11, color: GoNordicTheme.textSecondary)),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: TextButton(
+              key: const Key('wizard-privacy-link'),
+              style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: const Size(0, 32), tapTargetSize: MaterialTapTargetSize.shrinkWrap),
+              onPressed: () => SitePageScreen.openPrivacyPolicy(context),
+              child: Text(tr('bookingWizard.consent.privacyLink'), style: const TextStyle(fontSize: 11, decoration: TextDecoration.underline)),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
 
   Widget _step5() => Center(
     child: SingleChildScrollView(
