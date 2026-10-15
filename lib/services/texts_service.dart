@@ -34,15 +34,18 @@ class TextsService {
   /// Husker brugerens sprogvalg mellem app-starter. Kan udskiftes i tests.
   LanguageStore store = SecureLanguageStore();
 
-  static const _envUrl = String.fromEnvironment('TIDECMS_URL');
+  /// Standard: TideCMS online. `--dart-define=TIDECMS_URL=local` bruger TideCMS på udviklingsmaskinen.
+  static const defaultUrl = 'https://tidebook.ceniconsulting.dk/cms';
+  static const _envUrl = String.fromEnvironment('TIDECMS_URL', defaultValue: defaultUrl);
+  static bool get _local => _envUrl.trim() == 'local';
 
-  /// I release-builds skal TideCMS' adresse angives med `--dart-define=TIDECMS_URL=...`.
-  static bool isConfigured({bool releaseMode = kReleaseMode}) => !releaseMode || _envUrl.isNotEmpty;
+  /// En release-build må ikke pege på udviklingsmaskinen (`local`).
+  static bool isConfigured({bool releaseMode = kReleaseMode}) => !releaseMode || (_envUrl.isNotEmpty && !_local);
 
-  /// TideCMS' adresse – null i en release-build uden define (så bruges kun de indbyggede tekster).
+  /// TideCMS' adresse – null i en release-build med `local` (så bruges kun de indbyggede tekster).
   /// localhost/10.0.2.2 bruges kun under udvikling.
   static String? get tideCmsUrl {
-    if (_envUrl.isNotEmpty) return _envUrl.replaceFirst(RegExp(r'/+$'), '');
+    if (_envUrl.isNotEmpty && !_local) return _envUrl.trim().replaceFirst(RegExp(r'/+$'), '');
     if (kReleaseMode) return null;
     try {
       if (Platform.isAndroid) return 'http://10.0.2.2:4300';
