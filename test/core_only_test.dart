@@ -300,9 +300,9 @@ void main() {
   });
 
   group('Konfiguration', () {
-    test('release-build uden --dart-define kræver Core- og TideCMS-adresse', () {
-      // Testene bygges uden defines: i release-tilstand mangler begge
-      expect(missingReleaseDefines(releaseMode: true), containsAll(['TIDEBOOK_API_URL', 'TIDECMS_URL']));
+    test('release-build uden --dart-define bruger Tide-suiten online', () {
+      // Standarden er Tide-suiten online – en release-build mangler intet uden defines
+      expect(missingReleaseDefines(releaseMode: true), isEmpty);
       expect(missingReleaseDefines(releaseMode: false), isEmpty);
     });
   });

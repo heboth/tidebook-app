@@ -17,7 +17,7 @@ Future<void> main() async {
     DeviceOrientation.portraitDown,
   ]);
 
-  // En release-build skal have Core's (og TideCMS') adresse med – ellers ingen stille localhost-fallback
+  // En release-build må ikke pege på udviklingsmaskinen (TIDEBOOK_API_URL/TIDECMS_URL=local)
   final missing = missingReleaseDefines();
   if (missing.isNotEmpty) {
     runApp(ConfigErrorApp(missing: missing));

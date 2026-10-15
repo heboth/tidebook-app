@@ -121,24 +121,27 @@ class ApiService {
     _customBaseUrl = clean.endsWith('/api') ? clean : '$clean/api';
   }
 
-  static const _envUrl = String.fromEnvironment('TIDEBOOK_API_URL');
+  /// Standard: Tide-suiten online. `--dart-define=TIDEBOOK_API_URL=local` bruger Core på udviklingsmaskinen
+  /// (localhost, eller 10.0.2.2 fra Android-emulatoren); en anden adresse kan også angives.
+  static const defaultUrl = 'https://tidebook.ceniconsulting.dk';
+  static const _envUrl = String.fromEnvironment('TIDEBOOK_API_URL', defaultValue: defaultUrl);
+  static bool get _local => _envUrl.trim() == 'local';
 
-  /// Er Core-adressen sat? I release-builds skal den angives med
-  /// `--dart-define=TIDEBOOK_API_URL=...` – localhost-standarden gælder kun under udvikling.
+  /// Er Core-adressen gyldig? En release-build må ikke pege på udviklingsmaskinen (`local`).
   static bool isConfigured({bool releaseMode = kReleaseMode}) =>
-      !releaseMode || (_customBaseUrl != null && _customBaseUrl!.isNotEmpty) || _envUrl.isNotEmpty;
+      !releaseMode || (_customBaseUrl != null && _customBaseUrl!.isNotEmpty) || (_envUrl.isNotEmpty && !_local);
 
   static String get baseUrl {
     if (_customBaseUrl != null && _customBaseUrl!.isNotEmpty) {
       return _customBaseUrl!;
     }
-    if (_envUrl.isNotEmpty) {
+    if (_envUrl.isNotEmpty && !_local) {
       final clean = _envUrl.trim().replaceFirst(RegExp(r'/+$'), '');
       return clean.endsWith('/api') ? clean : '$clean/api';
     }
     if (kReleaseMode) {
-      // Ingen stille fallback til localhost i en udgivet app – main() viser en fejlskærm i stedet
-      throw StateError('TIDEBOOK_API_URL er ikke angivet (--dart-define=TIDEBOOK_API_URL=https://...).');
+      // Ingen localhost i en udgivet app – main() viser en fejlskærm i stedet
+      throw StateError('TIDEBOOK_API_URL=local kan ikke bruges i en release-build.');
     }
     // Kun under udvikling: Android-emulatoren når værtsmaskinen på 10.0.2.2
     try {
