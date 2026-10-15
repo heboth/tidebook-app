@@ -66,7 +66,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                     Text(tr('bookingDetail.departure', {'date': _currentBooking.departureDate, 'time': _currentBooking.departureTime, 'ship': _currentBooking.vesselName}), style: const TextStyle(color: GoNordicTheme.teal, fontWeight: FontWeight.bold)),
                     const Divider(height: 24),
                     _item(tr('bookingDetail.status'), _currentBooking.status),
-                    _item(tr('bookingDetail.cabin'), _currentBooking.cabinTitle),
+                    _item(tr('bookingDetail.cabin'), _currentBooking.cabinLabel),
                     _item(tr('bookingDetail.passengers'), _currentBooking.passengers.map((p) => p.fullName).join(', ')),
                     if (_currentBooking.vehicle != null) _item(tr('bookingDetail.vehicle'), '${_currentBooking.vehicle!.licensePlate} (${_currentBooking.vehicle!.category})'),
                     _item(tr('bookingDetail.totalPrice'), tr('bookingDetail.totalPaid', {'amount': _currentBooking.totalAmountDkk.toInt()})),

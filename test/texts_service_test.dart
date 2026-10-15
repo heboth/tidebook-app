@@ -74,6 +74,24 @@ void main() {
       expect(result['home']['title'], 'Forside');
     });
 
+    test("TideCMS' danske stedfortræder erstatter ikke appens egen oversættelse", () {
+      TextsService.instance.load(bundled,
+          translation: {
+            'home': {'title': 'Home', 'nav': {'explore': 'Explore'}},
+          },
+          // TideCMS' engelske pakke: titlen er oversat på ny, "explore" mangler (TideCMS sender dansk)
+          remote: {
+            'home': {'title': 'Front page', 'nav': {'explore': 'Udforsk'}},
+          },
+          remoteDanish: {
+            'home': {'title': 'Forside', 'nav': {'explore': 'Udforsk'}},
+          });
+      expect(tr('home.title'), 'Front page');
+      expect(tr('home.nav.explore'), 'Explore');
+      // Uden appens oversættelse bruges den danske
+      expect(tr('myBookings.count', {'count': 2}), '2 bookinger');
+    });
+
     test('load med remote bruger overlay', () {
       TextsService.instance.load(bundled, remote: {
         'home': {'title': 'Startseite', 'extra': 'x'},

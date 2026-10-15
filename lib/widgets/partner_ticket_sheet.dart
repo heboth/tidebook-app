@@ -126,7 +126,7 @@ class _PartnerTicketSheetState extends State<PartnerTicketSheet> {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(widget.addOn.name, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
+              Text(widget.addOn.label, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
               if (widget.addOn.partnerName.isNotEmpty)
                 Text(tr('bookingWizard.partner.partner', {'name': widget.addOn.partnerName}), style: const TextStyle(fontSize: 12, color: GoNordicTheme.textSecondary)),
               const SizedBox(height: 12),

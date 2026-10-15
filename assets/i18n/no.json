@@ -1,0 +1,395 @@
+{
+  "home": {
+    "noPass": {
+      "title": "Boardingkort",
+      "heading": "Fant ikke noe aktivt boardingkort",
+      "body": "Søk opp din eksisterende reservasjon under Mine bestillinger, eller fullfør en ny bestilling for å se QR-boardingkortet ditt.",
+      "findBooking": "Finn eksisterende bestilling",
+      "bookNew": "Bestill ny reise"
+    },
+    "nav": {
+      "explore": "Utforsk",
+      "book": "Bestill reise",
+      "bookings": "Bestillinger",
+      "boardingPass": "Boardingkort",
+      "profile": "Min profil"
+    }
+  },
+  "explore": {
+    "passengerModal": {
+      "title": "Velg reisende og kjøretøy",
+      "adults": "Voksne",
+      "children": "Barn (0–15 år)",
+      "bringVehicle": "Ta med bil / kjøretøy",
+      "bringVehicleSub": "Personbil under 1,85 m høyde",
+      "confirm": "Bekreft"
+    },
+    "profileTooltip": "Profil",
+    "bannerBadge": "MINICRUISE-TILBUD",
+    "bannerText": "Seil København–Oslo tur/retur fra kun 890 DKK →",
+    "hero": {
+      "badge": "DAGLIGE AVGANGER KØBENHAVN ⇄ OSLO",
+      "title": "Opplev Norge fra sjøsiden",
+      "subtitle": "2 netter til sjøs • Gastronomi • Panoramadekk"
+    },
+    "profileBar": {
+      "greeting": "Hei, {name} ({tier}) 👋",
+      "ready": "Personopplysninger, pass og elbil ({plate}) er klare til bruk.",
+      "loginTitle": "Logg inn for å bruke lagrede opplysninger",
+      "loginSub": "Fyller ut bilnummer og kontaktopplysninger automatisk.",
+      "loginLink": "Logg inn →",
+      "greetingNoTier": "Hei, {name} 👋"
+    },
+    "search": {
+      "ferryTab": "Fergeoverfart",
+      "adults": "{count} voksne",
+      "children": "{count} barn",
+      "vehicle": "Bil",
+      "findDepartures": "Finn avganger og bestill lugar →"
+    },
+    "priceCalendar": "LAVPRISKALENDER (14 DAGER)",
+    "highlights": {
+      "title": "OPPLEVELSER OM BORD",
+      "seeAll": "Se hele guiden →",
+      "foodTitle": "Skandinavisk gastronomi og buffeter",
+      "foodSub": "7 Seas-buffet og fersk frokost.",
+      "deckTitle": "Panoramadekk og salonger",
+      "deckSub": "Utsikt over Kattegat og Oslofjorden.",
+      "shopTitle": "Tax-Free Sea Shop",
+      "shopSub": "Kosmetikk, godteri og merkevarer med opptil 40 % rabatt."
+    },
+    "priceUnavailable": "Prisene kunne ikke hentes",
+    "retry": "Prøv igjen",
+    "noPrice": "–",
+    "price": "{amount},-",
+    "routesLoading": "Henter ruter…",
+    "routesUnavailable": "Rutene kunne ikke hentes fra TideBook."
+  },
+  "bookingWizard": {
+    "profileFilled": "✓ Kontaktopplysninger fylt ut fra profilen til {name}",
+    "missingContact": "Fyll ut fullt navn, e-post og telefonnummer.",
+    "paymentServerUnreachable": "Betalingsserveren kan ikke nås. Sjekk internettforbindelsen din eller prøv igjen.",
+    "paymentCancelled": "Betalingen ble avbrutt. Reservasjonen er frigitt.",
+    "title": "Bestill reise • Trinn {step}/5",
+    "previousStep": "Forrige trinn",
+    "step1": {
+      "title": "1. Velg rute",
+      "departure": "Avgang: {date} kl. {time}",
+      "next": "Velg lugar →",
+      "routesLoading": "Henter ruter…",
+      "routesUnavailable": "Rutene kunne ikke hentes fra TideBook.",
+      "departuresLoading": "Henter avganger…",
+      "departuresUnavailable": "Avgangene kunne ikke hentes fra TideBook.",
+      "noDepartures": "Ingen ledige avganger på ruten."
+    },
+    "step2": {
+      "title": "2. Velg lugar",
+      "selectCabin": "Velg en lugar for å fortsette.",
+      "next": "Tillegg →",
+      "loading": "Henter ledige lugarer…",
+      "unavailable": "Lugarene kunne ikke hentes fra TideBook.",
+      "none": "Det er ingen ledige lugarer på avgangen."
+    },
+    "step3": {
+      "title": "3. Tillegg og måltider",
+      "next": "Kontaktopplysninger →",
+      "loading": "Henter tilvalg…",
+      "unavailable": "Tilvalgene kunne ikke hentes fra TideBook.",
+      "none": "Det er ingen tilvalg til denne avgangen.",
+      "price": "{amount} DKK"
+    },
+    "step4": {
+      "title": "4. Kontaktopplysninger og profil",
+      "loggedInAs": "Logget inn: {name} ({tier})",
+      "useProfile": "Bruk profil",
+      "loginForQuickFill": "Logg inn for rask utfylling",
+      "login": "Logg inn",
+      "fullName": "FULLT NAVN",
+      "email": "E-POST",
+      "mobile": "MOBILNUMMER",
+      "total": "Totalt: {amount} DKK",
+      "continueToPayment": "Fortsett til betaling via Nets →",
+      "travellerTitle": "Reisende",
+      "birthDate": "FØDSELSDATO",
+      "choose": "Velg",
+      "gender": "KJØNN",
+      "genderFemale": "Kvinne",
+      "genderMale": "Mann",
+      "genderOther": "Annet",
+      "nationality": "NASJONALITET",
+      "manifestNote": "Kjønn, nasjonalitet og fødselsdato rapporteres til myndighetene for reiser over 20 nautiske mil (EU-krav).",
+      "loggedInAsNoTier": "Logget inn: {name}"
+    },
+    "step5": {
+      "title": "Bestillingen er fullført!",
+      "showBoardingPass": "Vis QR-boardingkort",
+      "backToHome": "Tilbake til forsiden"
+    },
+    "payment": {
+      "pageUnavailable": "Betalingssiden kunne ikke åpnes. Prøv igjen.",
+      "notCompleted": "Betalingen ble ikke fullført. Du kan prøve igjen eller avbryte.",
+      "notConfirmed": "Betalingen kunne ikke bekreftes. Kontakt kundeservice med bestilling {pnr}.",
+      "networkError": "Nettverksfeil under bekreftelsen. Kontakt kundeservice med bestilling {pnr}.",
+      "title": "Sikker betaling via Nets",
+      "reserved": "Bestilling {pnr} · plassen er reservert",
+      "amountDue": "Å betale",
+      "simulatorNotice": "Testmiljø: Nets-simulatoren brukes – ingen ekte penger.",
+      "secureNotice": "Du betaler trygt hos Nets. Beløpet trekkes først når bestillingen er bekreftet.",
+      "verifying": "Verifiserer hos Nets og Core...",
+      "pay": "Betal med kort eller Vipps MobilePay",
+      "cancel": "Avbryt betaling"
+    },
+    "missingPassengerDetails": "Fyll inn fødselsdato, kjønn og nasjonalitet – rederiet må rapportere dem til myndighetene.",
+    "missingLastName": "Skriv både fornavn og etternavn.",
+    "noDeparture": "Det er ingen avgang å bestille. Velg en annen rute eller prøv igjen.",
+    "retry": "Prøv igjen",
+    "quote": {
+      "loading": "Beregner pris…",
+      "failed": "Prisen kunne ikke beregnes. Prøv igjen."
+    },
+    "insurance": {
+      "title": "Avbestillingsforsikring fra {provider}",
+      "price": "{amount} kr.",
+      "lead": "Få pengene tilbake hvis du blir forhindret fra å reise (f.eks. ved sykdom).",
+      "percent": "{percent} % av reisens pris",
+      "perPerson": "per person",
+      "notRefundable": "Premien refunderes ikke hvis bestillingen avbestilles.",
+      "terms": "Forsikringsvilkår"
+    },
+    "partner": {
+      "choose": "Velg dato og billetter",
+      "change": "Endre",
+      "partner": "Partner: {name}",
+      "date": "Dato for besøk",
+      "loadingTimes": "Henter ledige tidspunkter…",
+      "closed": "Stengt på valgt dato – velg en annen dag.",
+      "chooseTime": "Velg tidspunkt for inngang",
+      "remaining": "{count} ledige",
+      "soldOut": "utsolgt",
+      "loadingPrice": "Henter pris…",
+      "total": "Totalt {amount} DKK",
+      "add": "Legg til",
+      "remove": "Fjern",
+      "issuedLater": "Partneren utsteder billettene med strekkoder når betalingen er gjennomført.",
+      "summary": "{date}{time} · {count} billetter · {amount} DKK",
+      "expired": "Prisen på partnerbillettene kunne ikke bekreftes – velg dem på nytt.",
+      "types": {
+        "ADULT": "Voksen",
+        "CHILD": "Barn",
+        "SENIOR": "Honnør",
+        "FAMILY_GROUP": "Familie (2+2)"
+      },
+      "demo": "DEMO – simulert partnerpris, ikke fra partneren."
+    },
+    "consent": {
+      "termsAccept": "Jeg har lest og godtar Go Nordic Cruiselines reisevilkår (versjon {version}). *",
+      "readTerms": "Les reisevilkårene",
+      "termsRequired": "Du må godta reisevilkårene før du kan betale.",
+      "marketing": "Ja takk, send meg tilbud og nyheter på e-post",
+      "marketingHint": "Frivillig og uten betydning for bestillingen din. Du kan alltid melde deg av igjen.",
+      "privacyLink": "Slik behandler vi personopplysningene dine (personvernerklæring)"
+    }
+  },
+  "myBookings": {
+    "missingFields": "Skriv inn både bookingnummer (PNR) og e-post/etternavn.",
+    "found": "✓ Booking funnet: {pnr}",
+    "title": "Mine bookinger og boardingkort",
+    "findHeading": "Finn reservasjonen din",
+    "findIntro": "Skriv inn bookingnummer (PNR) og e-post for å hente boardingkortet ditt.",
+    "pnrLabel": "BESTILLINGSNUMMER (PNR)",
+    "pnrHint": "F.eks. TIDE-9021",
+    "emailLabel": "E-POST ELLER ETTERNAVN",
+    "emailHint": "F.eks. mads.jensen@example.dk",
+    "findButton": "Finn bestilling",
+    "yourReservations": "DINE RESERVASJONER",
+    "checkInDone": "✓ Mobilinnsjekking fullført! Boardingkort utstedt.",
+    "checkInRejected": "Innsjekking avvist av serveren.",
+    "lookupUnavailable": "Kan ikke koble til TideBook. Sjekk internettforbindelsen og prøv igjen.",
+    "notFound": "Ingen bestilling funnet for de oppgitte opplysningene. Sjekk bestillingsnummer og e-post eller etternavn."
+  },
+  "bookingDetail": {
+    "checkInDone": "✓ Mobil innsjekking fullført! Boardingkortet er utstedt.",
+    "checkInRejected": "Innsjekkingen ble avvist av serveren.",
+    "title": "Bestilling {pnr}",
+    "departure": "{date} kl. {time} • {ship}",
+    "status": "Status",
+    "cabin": "Lugar",
+    "cabinUnknown": "Lugar",
+    "noCabin": "Ingen lugar",
+    "passengers": "Passasjerer",
+    "vehicle": "Kjøretøy",
+    "totalPrice": "Totalpris",
+    "totalPaid": "{amount} DKK (Betalt)",
+    "showBoardingPass": "Vis QR-boardingkort",
+    "checkIn": "Fullfør mobil innsjekking"
+  },
+  "boardingPass": {
+    "checkInDone": "✓ Innsjekking fullført! Offisielt boardingkort mottatt.",
+    "checkInFailed": "Innsjekkingen kunne ikke fullføres.",
+    "title": "Boardingkort",
+    "statusCheckedIn": "SJEKKET INN",
+    "statusReady": "KLAR",
+    "issuedAtCheckIn": "Offisielt boardingkort utstedes ved innsjekking",
+    "issuedAtCheckInBody": "Fullfør mobil innsjekking for å motta ditt kryptografisk signerte boardingkort fra TideBook Core.",
+    "checkingIn": "Sjekker inn hos Core...",
+    "checkInNow": "Sjekk inn nå",
+    "passenger": "Passasjer",
+    "departure": "Avgang",
+    "ship": "Ferje",
+    "cabin": "Lugar",
+    "gate": "Gate",
+    "vehicle": "Kjøretøy",
+    "onFoot": "Til fots"
+  },
+  "login": {
+    "welcome": "Velkommen, {name}!",
+    "profileTitle": "Passasjerprofil",
+    "logout": "Logg ut",
+    "title": "Passasjerinnlogging",
+    "individualOnly": "Kun for individuelle passasjerer. Innlogging for gruppeledere og Online Agent (OA) avvises automatisk.",
+    "heading": "Logg inn på kontoen din",
+    "usernameLabel": "BRUKERNAVN ELLER E-POST",
+    "passwordLabel": "PASSORD",
+    "verifying": "Verifiserer...",
+    "submit": "Logg inn",
+    "demoCustomer": "Kunde (tillatt)",
+    "demoAgent": "OA-agent (avvises)",
+    "invalidCredentials": "Ugyldig brukernavn eller passord. Prøv igjen.",
+    "coreUnavailable": "Kan ikke koble til TideBook. Innlogging krever forbindelse – prøv igjen om litt."
+  },
+  "profile": {
+    "editTitle": "Rediger profil og persondata",
+    "fullName": "Fullt navn",
+    "mobileNumber": "Mobilnummer",
+    "address": "Adresse",
+    "postalCode": "Postnr.",
+    "city": "Sted",
+    "licensePlateCar": "Registreringsnummer (bil)",
+    "cancel": "Avbryt",
+    "save": "Lagre",
+    "title": "Min profil",
+    "loginHeading": "Logg inn på profilen din",
+    "loginIntro": "Lagre persondata, adresse og registreringsnummer, så fylles bookingen ut automatisk.",
+    "loginOrCreate": "Logg inn / Opprett profil",
+    "loggedInTitle": "Min profil og persondata",
+    "memberNumber": "Medlemsnr.: {number}",
+    "bonusPoints": "Opptjente bonuspoeng: {points}",
+    "personalData": "Persondata",
+    "name": "Navn",
+    "email": "E-post",
+    "mobile": "Mobil",
+    "addressRow": "Adresse",
+    "nationality": "Nasjonalitet",
+    "passportNumber": "Passnummer",
+    "birthDate": "Fødselsdato",
+    "savedVehicle": "Lagret kjøretøy",
+    "licensePlate": "Registreringsnummer",
+    "vehicleType": "Kjøretøytype",
+    "vehicleTypeCar": "Vanlig personbil",
+    "fuel": "Drivstoff",
+    "fuelElectric": "⚡ 100 % elektrisk (elbil)",
+    "fuelCombustion": "Bensin/diesel"
+  },
+  "destinationGuide": {
+    "title": "Opplev livet om bord og destinasjonene",
+    "bannerText": "2 netter til sjøs og 5 timer til å utforske vakre Oslo",
+    "osloTitle": "Operaen i Oslo og Fjordbyen",
+    "osloText": "Gå en tur på det ikoniske marmortaket på Operaen i Oslo og nyt utsikten over fjorden, Munchmuseet og Barcode.",
+    "foodTitle": "Gastronomi og skandinaviske buffeter",
+    "foodText": "Våre dyktige kokker tryller frem fersk fisk, saftig kjøtt, nordiske oster og deilige desserter i 7 Seas og Explorers Steakhouse.",
+    "shopTitle": "Tax-free Sea Shop om bord",
+    "shopText": "Handle parfyme, kosmetikk, skandinavisk godteri, brennevin og merkevarer med 20–40 % rabatt sammenlignet med priser på land.",
+    "skiTitle": "Skiferie i den norske fjellheimen",
+    "skiText": "Ta med bilen til Norefjell, Hemsedal, Hafjell eller Trysil. Enkel og uthvilt ankomst i Oslo kl. 10.00.",
+    "bookNow": "Bestill MiniCruise nå →"
+  },
+  "netsPayment": {
+    "title": "Betaling · {pnr}",
+    "cancelTooltip": "Avbryt betaling"
+  },
+  "widgets": {
+    "bookingCard": {
+      "checkedIn": "✓ SJEKKET INN",
+      "confirmed": "BEKREFTET",
+      "departure": "{date} kl. {time}",
+      "showBoardingPass": "Vis boardingkort",
+      "checkIn": "Sjekk inn"
+    },
+    "cabinCard": {
+      "selected": "✓ Valgt",
+      "select": "Velg lugar",
+      "berths": "{count} køyer/senger",
+      "decks": "Dekk {decks}",
+      "free": "{count} ledige"
+    },
+    "appBar": {
+      "badge": "PASSASJER"
+    },
+    "banner": {
+      "defaultBadge": "SPESIALTILBUD",
+      "defaultText": "Opplev skiferie i Norge med Go Nordic Cruiseline • Spar 50 % på lugar"
+    },
+    "qr": {
+      "checkInRequired": "Innsjekking kreves",
+      "gateControl": "SOLAS GATEKONTROLL: {code}"
+    }
+  },
+  "countries": {
+    "DK": "Danmark",
+    "NO": "Norge",
+    "SE": "Sverige",
+    "DE": "Tyskland",
+    "FI": "Finland",
+    "NL": "Nederland",
+    "PL": "Polen",
+    "GB": "Storbritannia",
+    "US": "USA",
+    "FR": "Frankrike",
+    "ES": "Spania",
+    "IT": "Italia"
+  },
+  "cabinCategories": {
+    "O3": "Owner's Suite 3P (dobbeltseng + sofa)",
+    "O2": "Owner's Suite 2P (dobbeltseng)",
+    "J3": "Owner's Suite + jacuzzi 3P",
+    "X2": "Deluxe havutsikt 2P (dobbeltseng)",
+    "X1": "Deluxe 1P (enkeltseng)",
+    "C2": "Commodore havutsikt 2P (dobbeltseng)",
+    "WL": "Innvendig Commodore 2P (separate senger)",
+    "A4": "Utvendig lugar havutsikt 4P (køyer)",
+    "A4LV": "Utvendig, begrenset utsikt 4P (køyer)",
+    "B5": "Innvendig familie-/storlugar 5P",
+    "B4": "Innvendig standardlugar 4P",
+    "B3": "Innvendig lugar 3P (køyer)",
+    "B2": "Innvendig lugar 2P (køyesenger)",
+    "BC": "Innvendig lugar 2P (køyesenger)",
+    "BD": "Innvendig lugar 2P (liten dobbeltseng)",
+    "E4": "Economy innvendig 4P",
+    "H2": "Handikaplugar havutsikt 2P (trinnfri)",
+    "I2": "Handikaplugar innvendig 2P (trinnfri)",
+    "F4": "Kjæledyrlugar havutsikt 4P",
+    "F4LV": "Kjæledyrlugar, begrenset utsikt 4P",
+    "G4": "Kjæledyrlugar innvendig 4P"
+  },
+  "addOns": {
+    "addon-breakfast": "Frokostbuffet (skandinavisk bord)",
+    "addon-dinner": "Middagsbuffet inkl. drikke",
+    "addon-lounge": "Commodore VIP Lounge-tilgang",
+    "addon-wifi": "Starlink høyhastighets-Wi-Fi",
+    "addon-pet": "Kjæledyrbillett (hund/katt)",
+    "addon-priority-boarding": "Prioritert ombordkjøring (Lane Priority)",
+    "addon-ev-charging": "Elbillading om bord (22kW Type 2)",
+    "addon-tivoli-pass": "Tivoli inngang og turpass (København)",
+    "addon-legoland": "LEGOLAND® 1-dagsbillett (Billund)"
+  },
+  "config": {
+    "title": "Appen er ikke konfigurert",
+    "body": "Denne builden mangler adressen til TideBook Core. Bygg appen med --dart-define={keys}."
+  },
+  "legal": {
+    "privacyPolicy": "Personvernerklæring",
+    "privacyPolicySubtitle": "Slik behandler vi personopplysningene dine, og rettighetene dine",
+    "terms": "Reisevilkår",
+    "unavailable": "Siden kan ikke vises – bookingsidens adresse er ikke satt i denne appen."
+  }
+}

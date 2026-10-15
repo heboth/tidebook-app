@@ -1,3 +1,5 @@
+import '../services/texts_service.dart';
+
 /// Et tilvalg, som det kommer fra Core (/api/addons). Appen har intet eget katalog.
 class AddOnModel {
   final String id;
@@ -43,6 +45,13 @@ class AddOnModel {
       isPartner: json['pricingModel'] == 'DYNAMIC_API',
       partnerName: (json['externalProviderConfig'] as Map?)?['partnerName']?.toString() ?? '',
     );
+  }
+
+  /// Navnet på appens sprog (`addOns.<id>` i tekstpakken/TideCMS); ellers Core's navn (dansk).
+  String get label {
+    final key = 'addOns.$id';
+    final text = tr(key);
+    return text == key ? name : text;
   }
 
   /// Samme tilvalg med prisen fra TideRMS.

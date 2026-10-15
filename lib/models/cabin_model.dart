@@ -1,3 +1,5 @@
+import '../services/texts_service.dart';
+
 /// En kahytskategori på en afgang, samlet fra Core's kahytsliste (/api/departures/:id/cabins).
 /// Kategorien er Core's BookIT-kode (fx X2, B4). Prisen kommer kun fra Core's prisberegning.
 class CabinModel {
@@ -14,6 +16,13 @@ class CabinModel {
     required this.decks,
     this.bedType = '',
   });
+
+  /// Kategoriens navn fra tekstpakken (`cabinCategories.<kode>`); findes det ikke, vises Core's kode.
+  static String categoryLabel(String code) {
+    final key = 'cabinCategories.$code';
+    final label = tr(key);
+    return label == key ? code : label;
+  }
 
   /// Den kahyt, der reserveres, når kategorien vælges (første ledige).
   String get cabinId => freeCabinIds.first;

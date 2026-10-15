@@ -188,7 +188,7 @@ class _BoardingPassScreenState extends State<BoardingPassScreen> {
                   children: [
                     _row(tr('boardingPass.passenger'), leadPax, tr('boardingPass.departure'), '${_booking.departureDate} ${_booking.departureTime}'),
                     const SizedBox(height: 12),
-                    _row(tr('boardingPass.ship'), _booking.vesselName, tr('boardingPass.cabin'), currentPass?.seatOrCabin ?? _booking.cabinTitle),
+                    _row(tr('boardingPass.ship'), _booking.vesselName, tr('boardingPass.cabin'), currentPass?.seatOrCabin ?? _booking.cabinLabel),
                     const SizedBox(height: 12),
                     _row(tr('boardingPass.gate'), _booking.gateNumber, tr('boardingPass.vehicle'), _booking.vehicle?.licensePlate ?? tr('boardingPass.onFoot')),
                   ],

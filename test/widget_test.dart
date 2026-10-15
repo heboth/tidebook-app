@@ -30,7 +30,7 @@ void main() {
 
     expect(find.text('Udforsk'), findsOneWidget);
     expect(find.text('Book Rejse'), findsWidgets);
-    expect(find.text('Mine Bookinger'), findsOneWidget);
+    expect(find.text('Bookinger'), findsOneWidget);
     expect(find.text('Boardingkort'), findsOneWidget);
     expect(find.text('Min Profil'), findsOneWidget);
   });

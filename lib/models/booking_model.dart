@@ -1,4 +1,6 @@
+import 'cabin_model.dart';
 import 'passenger_model.dart';
+import '../services/texts_service.dart';
 
 class BoardingPassModel {
   final String passengerId;
@@ -45,7 +47,12 @@ class BookingModel {
   final List<PassengerModel> passengers;
   final VehicleModel? vehicle;
   final List<String> selectedCabinIds;
-  final String cabinTitle;
+
+  /// Kahyttens titel, hvis Core sender en; ellers vises kahytstypen (se [cabinLabel])
+  final String? cabinTitle;
+
+  /// Kahytstyperne (BookIT-koder, fx A4) fra Core
+  final List<String> cabinCategories;
   final List<String> cabinNumbers;
   final List<Map<String, dynamic>> addOns;
   final String leadContactName;
@@ -78,7 +85,8 @@ class BookingModel {
     required this.passengers,
     this.vehicle,
     required this.selectedCabinIds,
-    required this.cabinTitle,
+    this.cabinTitle,
+    this.cabinCategories = const [],
     required this.cabinNumbers,
     required this.addOns,
     required this.leadContactName,
@@ -94,6 +102,13 @@ class BookingModel {
     this.boardingPasses = const [],
     this.bookingToken,
   }) : createdAt = createdAt ?? DateTime.now();
+
+  /// Kahytten til visning før check-in: titel fra Core, ellers kahytstypen på appens sprog.
+  String get cabinLabel {
+    if (cabinTitle != null && cabinTitle!.isNotEmpty) return cabinTitle!;
+    if (cabinCategories.isNotEmpty) return cabinCategories.map(CabinModel.categoryLabel).join(', ');
+    return selectedCabinIds.isNotEmpty ? tr('bookingDetail.cabinUnknown') : tr('bookingDetail.noCabin');
+  }
 
   bool get isCheckedIn => status == 'CHECKED_IN' || boardingPasses.isNotEmpty;
   bool get isCancelled => status == 'CANCELLED';
@@ -128,6 +143,7 @@ class BookingModel {
       vehicle: vehicle ?? this.vehicle,
       selectedCabinIds: selectedCabinIds,
       cabinTitle: cabinTitle,
+      cabinCategories: cabinCategories,
       cabinNumbers: cabinNumbers ?? this.cabinNumbers,
       addOns: addOns ?? this.addOns,
       leadContactName: leadContactName,
@@ -209,7 +225,8 @@ class BookingModel {
       passengers: paxList,
       vehicle: veh,
       selectedCabinIds: cabinIds,
-      cabinTitle: json['cabinTitle'] ?? (cabinIds.isNotEmpty ? 'Kahyt' : 'Ingen kahyt'),
+      cabinTitle: json['cabinTitle']?.toString(),
+      cabinCategories: (json['cabinCategories'] as List?)?.map((e) => e.toString()).toList() ?? const [],
       cabinNumbers: cabinIds,
       addOns: (json['addOns'] as List?)
               ?.map((e) => Map<String, dynamic>.from(e as Map))

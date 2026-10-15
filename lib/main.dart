@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'screens/home_screen.dart';
 import 'services/api_service.dart';
 import 'services/booking_service.dart';
@@ -79,6 +80,10 @@ class TidebookApp extends StatelessWidget {
         title: 'Go Nordic Cruiseline • Tidebook',
         debugShowCheckedModeBanner: false,
         theme: GoNordicTheme.lightTheme,
+        // Datovælgeren og Flutters øvrige tekster følger appens sprog (ellers engelsk)
+        locale: TextsService.instance.locale,
+        supportedLocales: const [Locale('da'), Locale('nb'), Locale('en')],
+        localizationsDelegates: GlobalMaterialLocalizations.delegates,
         home: const HomeScreen(),
       ),
     );

@@ -272,7 +272,7 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
       'routeId': dep.routeId,
       'departureId': dep.id,
       'outboundDate': dep.portDate,
-      'ticketClass': 'PREMIUM',
+      'ticketClass': 'STANDARD', // samme standard som bookingsitet; PREMIUM har morgenmad inkluderet (0 kr.) i TideRMS
       'passengers': [
         {
           'id': 'P1',
@@ -466,7 +466,7 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
     return Card(
       key: Key('wizard-partner-${a.id}'),
       child: ListTile(
-        title: Text(a.name),
+        title: Text(a.label),
         subtitle: sel == null
             ? (a.partnerName.isEmpty ? null : Text(tr('bookingWizard.partner.partner', {'name': a.partnerName})))
             : Text(tr('bookingWizard.partner.summary', {'date': sel.date, 'time': sel.time == null ? '' : ' ${sel.time}', 'count': sel.ticketCount, 'amount': sel.quote.totalPriceDkk.round()})),
@@ -515,7 +515,8 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
     final o = _insuranceOffer;
     if (o == null) return const SizedBox.shrink();
     final details = [
-      (o.description?.isNotEmpty ?? false) ? o.description! : tr('bookingWizard.insurance.lead'),
+      // TideRMS' beskrivelse er på dansk – på andre sprog bruges appens egen tekst
+      (TextsService.instance.language == 'da' && (o.description?.isNotEmpty ?? false)) ? o.description! : tr('bookingWizard.insurance.lead'),
       if (o.priceType == 'PERCENT' && o.percent != null) tr('bookingWizard.insurance.percent', {'percent': o.percent! % 1 == 0 ? o.percent!.round() : o.percent!}),
       if (o.priceType == 'FIXED' && o.per == 'PERSON') tr('bookingWizard.insurance.perPerson'),
       if (!o.premiumRefundable) tr('bookingWizard.insurance.notRefundable'),
@@ -687,7 +688,7 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
         else
           ...catalog.map((a) => a.isPartner ? _partnerTile(a) : Card(
             child: CheckboxListTile(
-              title: Text(a.name),
+              title: Text(a.label),
               subtitle: a.priceDkk == null ? null : Text(tr('bookingWizard.step3.price', {'amount': a.priceDkk!.round()})),
               value: _addons.containsKey(a.id), activeColor: GoNordicTheme.pine,
               onChanged: (v) {

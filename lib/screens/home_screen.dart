@@ -112,7 +112,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               BottomNavigationBarItem(
                 icon: const Icon(Icons.confirmation_number),
-                label: tr('home.nav.myBookings'),
+                label: tr('home.nav.bookings'),
               ),
               BottomNavigationBarItem(
                 icon: const Icon(Icons.qr_code_2),
