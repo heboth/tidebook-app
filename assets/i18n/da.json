@@ -248,6 +248,7 @@
     "vehicle": "Køretøj",
     "totalPrice": "Samlet pris",
     "totalPaid": "{amount} DKK (Betalt)",
+    "totalUnpaid": "{amount} DKK (ikke betalt)",
     "showBoardingPass": "Vis QR Boardingkort",
     "checkIn": "Gennemfør Mobil Check-in"
   },
@@ -419,5 +420,14 @@
     "privacyPolicySubtitle": "Sådan behandler vi dine personoplysninger, og dine rettigheder",
     "terms": "Rejsebetingelser",
     "unavailable": "Siden kan ikke vises – bookingsitets adresse er ikke sat i denne app."
+  },
+  "bookingStatus": {
+    "CONFIRMED": "Bekræftet",
+    "PENDING": "Afventer betaling",
+    "AMENDED": "Ændret",
+    "CHECKED_IN": "Tjekket ind",
+    "BOARDED": "Om bord",
+    "CANCELLED": "Annulleret",
+    "COMPLETED": "Gennemført"
   }
 }
