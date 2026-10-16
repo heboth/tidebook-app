@@ -9,7 +9,6 @@
     },
     "nav": {
       "explore": "Udforsk",
-      "book": "Book Rejse",
       "bookings": "Bookinger",
       "boardingPass": "Boardingkort",
       "profile": "Min Profil"
@@ -80,7 +79,15 @@
       "routesUnavailable": "Ruterne kunne ikke hentes fra TideBook.",
       "departuresLoading": "Henter afgange…",
       "departuresUnavailable": "Afgangene kunne ikke hentes fra TideBook.",
-      "noDepartures": "Ingen ledige afgange på ruten."
+      "noDepartures": "Ingen ledige afgange på ruten.",
+      "cruise": "MiniCruise",
+      "oneway": "Færgeoverfart",
+      "cruiseHint": "Ud og hjem med samme kahyt – hjemrejsen er dagen efter.",
+      "onewayHint": "Én vej.",
+      "returnDeparture": "Hjemrejse: {date} kl. {time}",
+      "returnLoading": "Henter hjemrejse…",
+      "returnUnavailable": "Hjemrejsen kunne ikke hentes fra TideBook.",
+      "noReturn": "Der er ingen hjemrejse dagen efter. Vælg en anden dato eller Færgeoverfart."
     },
     "step2": {
       "title": "2. Vælg Kahyt",
@@ -88,7 +95,9 @@
       "next": "Tilvalg →",
       "loading": "Henter ledige kahytter…",
       "unavailable": "Kahytterne kunne ikke hentes fra TideBook.",
-      "none": "Der er ingen ledige kahytter på afgangen."
+      "none": "Der er ingen ledige kahytter på afgangen.",
+      "capacityNote": "Kun kahytter med plads til {count} personer vises.",
+      "noneForParty": "Der er ingen ledige kahytter med plads til {count} personer. Vælg færre rejsende, eller kontakt kundeservice."
     },
     "step3": {
       "title": "3. Tilvalg & Måltider",
@@ -118,7 +127,15 @@
       "genderOther": "Andet",
       "nationality": "NATIONALITET",
       "manifestNote": "Køn, nationalitet og fødselsdato indberettes til myndighederne for rejser over 20 sømil (EU-krav).",
-      "loggedInAsNoTier": "Logget ind: {name}"
+      "loggedInAsNoTier": "Logget ind: {name}",
+      "travellerN": "Rejsende {n} ({type})",
+      "adult": "voksen",
+      "child": "barn",
+      "firstName": "FORNAVN",
+      "lastName": "EFTERNAVN",
+      "missingFellowDetails": "Udfyld navn, fødselsdato, køn og nationalitet for rejsende {n}.",
+      "childTooOld": "Rejsende {n} er over 15 år på rejsedagen og skal bookes som voksen.",
+      "missingPlate": "Skriv bilens nummerplade."
     },
     "step5": {
       "title": "Booking Gennemført!",
@@ -188,6 +205,17 @@
       "marketing": "Ja tak, send mig tilbud og nyheder på e-mail",
       "marketingHint": "Frivilligt og uden betydning for din booking. Du kan altid afmelde dig igen.",
       "privacyLink": "Sådan behandler vi dine personoplysninger (privatlivspolitik)"
+    },
+    "vehicle": {
+      "title": "Køretøj",
+      "category": "TYPE AF KØRETØJ",
+      "licensePlate": "NUMMERPLADE",
+      "categories": {
+        "CAR_STANDARD": "Personbil (under 1,85 m)",
+        "CAR_LARGE": "Stor bil / SUV",
+        "VAN_CAMPER": "Autocamper / varebil",
+        "MOTORCYCLE": "Motorcykel"
+      }
     }
   },
   "myBookings": {

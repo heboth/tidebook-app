@@ -51,7 +51,7 @@ class DestinationGuideScreen extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => const BookingWizardScreen(),
+                          builder: (_) => const BookingWizardScreen(initialTripType: 'CRUISE', initialAdults: 2),
                         ),
                       );
                     },

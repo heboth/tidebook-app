@@ -3,7 +3,6 @@ import '../services/booking_service.dart';
 import '../services/texts_service.dart';
 import '../theme/gonordic_theme.dart';
 import 'explore_screen.dart';
-import 'booking_wizard_screen.dart';
 import 'my_bookings_screen.dart';
 import 'boarding_pass_screen.dart';
 import 'profile_screen.dart';
@@ -26,11 +25,9 @@ class _HomeScreenState extends State<HomeScreen> {
         final activeBooking = BookingService().activeBooking;
 
         final List<Widget> screens = [
+          // Booking startes fra søgningen på forsiden (ingen særskilt booking-fane)
           ExploreScreen(
             onNavigateToTab: (index) => setState(() => _currentIndex = index),
-          ),
-          BookingWizardScreen(
-            onFinished: () => setState(() => _currentIndex = 2),
           ),
           const MyBookingsScreen(),
           activeBooking != null
@@ -64,7 +61,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               SizedBox(
                                 width: double.infinity,
                                 child: ElevatedButton.icon(
-                                  onPressed: () => setState(() => _currentIndex = 2),
+                                  onPressed: () => setState(() => _currentIndex = 1),
                                   icon: const Icon(Icons.search),
                                   label: Text(tr('home.noPass.findBooking')),
                                 ),
@@ -73,7 +70,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               SizedBox(
                                 width: double.infinity,
                                 child: OutlinedButton.icon(
-                                  onPressed: () => setState(() => _currentIndex = 1),
+                                  onPressed: () => setState(() => _currentIndex = 0),
                                   icon: const Icon(Icons.sailing),
                                   label: Text(tr('home.noPass.bookNew')),
                                 ),
@@ -105,10 +102,6 @@ class _HomeScreenState extends State<HomeScreen> {
               BottomNavigationBarItem(
                 icon: const Icon(Icons.explore),
                 label: tr('home.nav.explore'),
-              ),
-              BottomNavigationBarItem(
-                icon: const Icon(Icons.sailing),
-                label: tr('home.nav.book'),
               ),
               BottomNavigationBarItem(
                 icon: const Icon(Icons.confirmation_number),

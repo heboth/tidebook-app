@@ -9,7 +9,6 @@
     },
     "nav": {
       "explore": "Explore",
-      "book": "Book Trip",
       "bookings": "Bookings",
       "boardingPass": "Boarding Pass",
       "profile": "My Profile"
@@ -80,7 +79,15 @@
       "routesUnavailable": "The routes could not be loaded from TideBook.",
       "departuresLoading": "Loading departures…",
       "departuresUnavailable": "The departures could not be loaded from TideBook.",
-      "noDepartures": "No available departures on this route."
+      "noDepartures": "No available departures on this route.",
+      "cruise": "MiniCruise",
+      "oneway": "Ferry crossing",
+      "cruiseHint": "Return trip in the same cabin – you sail home the next day.",
+      "onewayHint": "One way.",
+      "returnDeparture": "Return: {date} at {time}",
+      "returnLoading": "Fetching return sailing…",
+      "returnUnavailable": "The return sailing could not be fetched from TideBook.",
+      "noReturn": "There is no return sailing the next day. Choose another date or Ferry crossing."
     },
     "step2": {
       "title": "2. Choose cabin",
@@ -88,7 +95,9 @@
       "next": "Extras →",
       "loading": "Loading available cabins…",
       "unavailable": "The cabins could not be loaded from TideBook.",
-      "none": "There are no available cabins on this departure."
+      "none": "There are no available cabins on this departure.",
+      "capacityNote": "Only cabins with room for {count} people are shown.",
+      "noneForParty": "There are no available cabins with room for {count} people. Choose fewer travellers or contact customer service."
     },
     "step3": {
       "title": "3. Extras & meals",
@@ -118,7 +127,15 @@
       "genderOther": "Other",
       "nationality": "NATIONALITY",
       "manifestNote": "Gender, nationality and date of birth are reported to the authorities for voyages over 20 nautical miles (EU requirement).",
-      "loggedInAsNoTier": "Logged in: {name}"
+      "loggedInAsNoTier": "Logged in: {name}",
+      "travellerN": "Traveller {n} ({type})",
+      "adult": "adult",
+      "child": "child",
+      "firstName": "FIRST NAME",
+      "lastName": "LAST NAME",
+      "missingFellowDetails": "Please enter name, date of birth, gender and nationality for traveller {n}.",
+      "childTooOld": "Traveller {n} is over 15 on the day of travel and must be booked as an adult.",
+      "missingPlate": "Please enter the vehicle registration number."
     },
     "step5": {
       "title": "Booking complete!",
@@ -188,6 +205,17 @@
       "marketing": "Yes please, send me offers and news by email",
       "marketingHint": "Optional and without effect on your booking. You can unsubscribe at any time.",
       "privacyLink": "How we process your personal data (privacy policy)"
+    },
+    "vehicle": {
+      "title": "Vehicle",
+      "category": "VEHICLE TYPE",
+      "licensePlate": "REGISTRATION NUMBER",
+      "categories": {
+        "CAR_STANDARD": "Car (under 1.85 m)",
+        "CAR_LARGE": "Large car / SUV",
+        "VAN_CAMPER": "Motorhome / van",
+        "MOTORCYCLE": "Motorcycle"
+      }
     }
   },
   "myBookings": {

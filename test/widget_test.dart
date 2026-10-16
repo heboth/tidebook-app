@@ -29,7 +29,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Udforsk'), findsOneWidget);
-    expect(find.text('Book Rejse'), findsWidgets);
+    expect(find.text('Book Rejse'), findsNothing); // booking startes fra søgningen på forsiden
     expect(find.text('Bookinger'), findsOneWidget);
     expect(find.text('Boardingkort'), findsOneWidget);
     expect(find.text('Min Profil'), findsOneWidget);

@@ -9,7 +9,6 @@
     },
     "nav": {
       "explore": "Utforsk",
-      "book": "Bestill reise",
       "bookings": "Bestillinger",
       "boardingPass": "Boardingkort",
       "profile": "Min profil"
@@ -80,7 +79,15 @@
       "routesUnavailable": "Rutene kunne ikke hentes fra TideBook.",
       "departuresLoading": "Henter avganger…",
       "departuresUnavailable": "Avgangene kunne ikke hentes fra TideBook.",
-      "noDepartures": "Ingen ledige avganger på ruten."
+      "noDepartures": "Ingen ledige avganger på ruten.",
+      "cruise": "MiniCruise",
+      "oneway": "Fergeoverfart",
+      "cruiseHint": "Tur-retur i samme lugar – hjemreisen er dagen etter.",
+      "onewayHint": "Én vei.",
+      "returnDeparture": "Hjemreise: {date} kl. {time}",
+      "returnLoading": "Henter hjemreise…",
+      "returnUnavailable": "Hjemreisen kunne ikke hentes fra TideBook.",
+      "noReturn": "Det finnes ingen hjemreise dagen etter. Velg en annen dato eller Fergeoverfart."
     },
     "step2": {
       "title": "2. Velg lugar",
@@ -88,7 +95,9 @@
       "next": "Tillegg →",
       "loading": "Henter ledige lugarer…",
       "unavailable": "Lugarene kunne ikke hentes fra TideBook.",
-      "none": "Det er ingen ledige lugarer på avgangen."
+      "none": "Det er ingen ledige lugarer på avgangen.",
+      "capacityNote": "Bare lugarer med plass til {count} personer vises.",
+      "noneForParty": "Det finnes ingen ledige lugarer med plass til {count} personer. Velg færre reisende, eller kontakt kundeservice."
     },
     "step3": {
       "title": "3. Tillegg og måltider",
@@ -118,7 +127,15 @@
       "genderOther": "Annet",
       "nationality": "NASJONALITET",
       "manifestNote": "Kjønn, nasjonalitet og fødselsdato rapporteres til myndighetene for reiser over 20 nautiske mil (EU-krav).",
-      "loggedInAsNoTier": "Logget inn: {name}"
+      "loggedInAsNoTier": "Logget inn: {name}",
+      "travellerN": "Reisende {n} ({type})",
+      "adult": "voksen",
+      "child": "barn",
+      "firstName": "FORNAVN",
+      "lastName": "ETTERNAVN",
+      "missingFellowDetails": "Fyll ut navn, fødselsdato, kjønn og nasjonalitet for reisende {n}.",
+      "childTooOld": "Reisende {n} er over 15 år på reisedagen og må bestilles som voksen.",
+      "missingPlate": "Skriv inn bilens registreringsnummer."
     },
     "step5": {
       "title": "Bestillingen er fullført!",
@@ -188,6 +205,17 @@
       "marketing": "Ja takk, send meg tilbud og nyheter på e-post",
       "marketingHint": "Frivillig og uten betydning for bestillingen din. Du kan alltid melde deg av igjen.",
       "privacyLink": "Slik behandler vi personopplysningene dine (personvernerklæring)"
+    },
+    "vehicle": {
+      "title": "Kjøretøy",
+      "category": "TYPE KJØRETØY",
+      "licensePlate": "REGISTRERINGSNUMMER",
+      "categories": {
+        "CAR_STANDARD": "Personbil (under 1,85 m)",
+        "CAR_LARGE": "Stor bil / SUV",
+        "VAN_CAMPER": "Bobil / varebil",
+        "MOTORCYCLE": "Motorsykkel"
+      }
     }
   },
   "myBookings": {
