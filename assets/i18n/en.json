@@ -248,6 +248,7 @@
     "vehicle": "Vehicle",
     "totalPrice": "Total price",
     "totalPaid": "DKK {amount} (Paid)",
+    "totalUnpaid": "DKK {amount} (not paid)",
     "showBoardingPass": "Show QR boarding pass",
     "checkIn": "Complete mobile check-in"
   },
@@ -419,5 +420,14 @@
     "privacyPolicySubtitle": "How we process your personal data, and your rights",
     "terms": "Travel terms",
     "unavailable": "The page cannot be shown – the booking site's address is not set in this app."
+  },
+  "bookingStatus": {
+    "CONFIRMED": "Confirmed",
+    "PENDING": "Awaiting payment",
+    "AMENDED": "Amended",
+    "CHECKED_IN": "Checked in",
+    "BOARDED": "On board",
+    "CANCELLED": "Cancelled",
+    "COMPLETED": "Completed"
   }
 }

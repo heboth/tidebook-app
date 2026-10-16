@@ -65,11 +65,12 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                     const SizedBox(height: 6),
                     Text(tr('bookingDetail.departure', {'date': _currentBooking.departureDate, 'time': _currentBooking.departureTime, 'ship': _currentBooking.vesselName}), style: const TextStyle(color: GoNordicTheme.teal, fontWeight: FontWeight.bold)),
                     const Divider(height: 24),
-                    _item(tr('bookingDetail.status'), _currentBooking.status),
+                    _item(tr('bookingDetail.status'), _label('bookingStatus', _currentBooking.status)),
                     _item(tr('bookingDetail.cabin'), _currentBooking.cabinLabel),
                     _item(tr('bookingDetail.passengers'), _currentBooking.passengers.map((p) => p.fullName).join(', ')),
-                    if (_currentBooking.vehicle != null) _item(tr('bookingDetail.vehicle'), '${_currentBooking.vehicle!.licensePlate} (${_currentBooking.vehicle!.category})'),
-                    _item(tr('bookingDetail.totalPrice'), tr('bookingDetail.totalPaid', {'amount': _currentBooking.totalAmountDkk.toInt()})),
+                    if (_currentBooking.vehicle != null) _item(tr('bookingDetail.vehicle'), '${_currentBooking.vehicle!.licensePlate} (${_label('bookingWizard.vehicle.categories', _currentBooking.vehicle!.category)})'),
+                    // "Betalt" kun når Core siger, bookingen er betalt (fx ikke en telefonbooking med ubetalt betalingslink)
+                    _item(tr('bookingDetail.totalPrice'), tr(_currentBooking.paymentStatus == 'PAID' ? 'bookingDetail.totalPaid' : 'bookingDetail.totalUnpaid', {'amount': _currentBooking.totalAmountDkk.toInt()})),
                   ],
                 ),
               ),
@@ -102,6 +103,13 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
         ),
       ),
     );
+  }
+
+  /// Tekst for en kode fra Core på appens sprog – ukendte koder vises som de er
+  String _label(String group, String code) {
+    final key = '$group.$code';
+    final text = tr(key);
+    return text == key ? code : text;
   }
 
   Widget _item(String label, String value) {
