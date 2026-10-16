@@ -10,7 +10,7 @@
     "nav": {
       "explore": "Udforsk",
       "book": "Book Rejse",
-      "myBookings": "Mine Bookinger",
+      "bookings": "Bookinger",
       "boardingPass": "Boardingkort",
       "profile": "Min Profil"
     }
@@ -214,6 +214,8 @@
     "departure": "{date} kl. {time} • {ship}",
     "status": "Status",
     "cabin": "Kahyt",
+    "cabinUnknown": "Kahyt",
+    "noCabin": "Ingen kahyt",
     "passengers": "Passagerer",
     "vehicle": "Køretøj",
     "totalPrice": "Samlet pris",
@@ -228,7 +230,7 @@
     "statusCheckedIn": "TJEKKET IND",
     "statusReady": "KLAR",
     "issuedAtCheckIn": "Officielt boardingkort udstedes ved check-in",
-    "issuedAtCheckInBody": "Gennemfør mobil check-in for at modtage dit krypografisk signerede boardingkort fra TideBook Core.",
+    "issuedAtCheckInBody": "Gennemfør mobil check-in for at modtage dit kryptografisk signerede boardingkort fra TideBook Core.",
     "checkingIn": "Tjekker ind hos Core...",
     "checkInNow": "Tjek ind nu",
     "passenger": "Passager",
@@ -368,6 +370,17 @@
     "F4": "Kæledyrskahyt havudsigt 4P",
     "F4LV": "Kæledyrskahyt, begrænset udsyn 4P",
     "G4": "Kæledyrskahyt indvendig 4P"
+  },
+  "addOns": {
+    "addon-breakfast": "Morgenmadsbuffet (Skandinavisk Bord)",
+    "addon-dinner": "Aftensmadsbuffet inkl. drikkevarer",
+    "addon-lounge": "Commodore VIP Lounge Adgang",
+    "addon-wifi": "Starlink Højhastigheds Wi-Fi",
+    "addon-pet": "Kæledyrsbillet (Hund/Kat)",
+    "addon-priority-boarding": "Prioriteret Ombordkørsel (Lane Priority)",
+    "addon-ev-charging": "Elbil Opladning ombord (22kW Type 2)",
+    "addon-tivoli-pass": "Tivoli Entré & Turpas (København)",
+    "addon-legoland": "LEGOLAND® 1-dags Billet (Billund)"
   },
   "config": {
     "title": "Appen er ikke konfigureret",

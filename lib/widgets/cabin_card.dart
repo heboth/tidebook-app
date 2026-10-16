@@ -18,11 +18,7 @@ class CabinCard extends StatelessWidget {
   });
 
   /// Kategoriens navn fra tekstpakken; findes det ikke, vises Core's kode.
-  static String categoryLabel(String code) {
-    final key = 'cabinCategories.$code';
-    final label = tr(key);
-    return label == key ? code : label;
-  }
+  static String categoryLabel(String code) => CabinModel.categoryLabel(code);
 
   /// Billede efter kategoriens første bogstav (kun udseende – ingen data).
   static String? _imageFor(String code) {

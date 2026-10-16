@@ -1,0 +1,395 @@
+{
+  "home": {
+    "noPass": {
+      "title": "Boarding Pass",
+      "heading": "No active boarding pass found",
+      "body": "Look up your existing reservation under My Bookings, or complete a new booking to see your QR boarding pass.",
+      "findBooking": "Find Existing Booking",
+      "bookNew": "Book New Trip"
+    },
+    "nav": {
+      "explore": "Explore",
+      "book": "Book Trip",
+      "bookings": "Bookings",
+      "boardingPass": "Boarding Pass",
+      "profile": "My Profile"
+    }
+  },
+  "explore": {
+    "passengerModal": {
+      "title": "Select Travellers & Vehicle",
+      "adults": "Adults",
+      "children": "Children (0-15 years)",
+      "bringVehicle": "Bring a car / vehicle",
+      "bringVehicleSub": "Car under 1.85m in height",
+      "confirm": "Confirm"
+    },
+    "profileTooltip": "Profile",
+    "bannerBadge": "MINICRUISE OFFER",
+    "bannerText": "Sail Copenhagen–Oslo return from just DKK 890 →",
+    "hero": {
+      "badge": "DAILY DEPARTURES COPENHAGEN ⇄ OSLO",
+      "title": "Discover Norway from the sea",
+      "subtitle": "2 nights at sea • Gastronomy • Panoramic decks"
+    },
+    "profileBar": {
+      "greeting": "Hi, {name} ({tier}) 👋",
+      "ready": "Personal details, passport and electric car ({plate}) are ready to use.",
+      "loginTitle": "Log in to use your saved details",
+      "loginSub": "Fills in your registration number and contact details automatically.",
+      "loginLink": "Log in →",
+      "greetingNoTier": "Hi, {name} 👋"
+    },
+    "search": {
+      "ferryTab": "Ferry Crossing",
+      "adults": "{count} adults",
+      "children": "{count} children",
+      "vehicle": "Car",
+      "findDepartures": "Find Departures & Book Cabin →"
+    },
+    "priceCalendar": "LOW-FARE CALENDAR (14 DAYS)",
+    "highlights": {
+      "title": "ON-BOARD EXPERIENCES",
+      "seeAll": "See full guide →",
+      "foodTitle": "Scandinavian Gastronomy & Buffets",
+      "foodSub": "7 Seas buffet and fresh breakfast.",
+      "deckTitle": "Panoramic Decks & Lounges",
+      "deckSub": "Views over the Kattegat and the Oslofjord.",
+      "shopTitle": "Tax-Free Sea Shop",
+      "shopSub": "Cosmetics, sweets and brands at up to 40% off."
+    },
+    "priceUnavailable": "Prices could not be loaded",
+    "retry": "Try again",
+    "noPrice": "–",
+    "price": "{amount},-",
+    "routesLoading": "Loading routes…",
+    "routesUnavailable": "The routes could not be loaded from TideBook."
+  },
+  "bookingWizard": {
+    "profileFilled": "✓ Contact details filled in from {name}'s profile",
+    "missingContact": "Please enter your full name, email and phone number.",
+    "paymentServerUnreachable": "The payment server can't be reached. Check your internet connection or try again.",
+    "paymentCancelled": "Payment cancelled. Your reservation has been released.",
+    "title": "Book trip • Step {step}/5",
+    "previousStep": "Previous step",
+    "step1": {
+      "title": "1. Choose route",
+      "departure": "Departure: {date} at {time}",
+      "next": "Choose cabin →",
+      "routesLoading": "Loading routes…",
+      "routesUnavailable": "The routes could not be loaded from TideBook.",
+      "departuresLoading": "Loading departures…",
+      "departuresUnavailable": "The departures could not be loaded from TideBook.",
+      "noDepartures": "No available departures on this route."
+    },
+    "step2": {
+      "title": "2. Choose cabin",
+      "selectCabin": "Please choose a cabin to continue.",
+      "next": "Extras →",
+      "loading": "Loading available cabins…",
+      "unavailable": "The cabins could not be loaded from TideBook.",
+      "none": "There are no available cabins on this departure."
+    },
+    "step3": {
+      "title": "3. Extras & meals",
+      "next": "Contact details →",
+      "loading": "Loading extras…",
+      "unavailable": "The extras could not be loaded from TideBook.",
+      "none": "There are no extras for this departure.",
+      "price": "{amount} DKK"
+    },
+    "step4": {
+      "title": "4. Contact details & profile",
+      "loggedInAs": "Logged in: {name} ({tier})",
+      "useProfile": "Use profile",
+      "loginForQuickFill": "Log in to fill in details quickly",
+      "login": "Log in",
+      "fullName": "FULL NAME",
+      "email": "EMAIL",
+      "mobile": "MOBILE NUMBER",
+      "total": "Total: {amount} DKK",
+      "continueToPayment": "Continue to payment via Nets →",
+      "travellerTitle": "Traveller",
+      "birthDate": "DATE OF BIRTH",
+      "choose": "Choose",
+      "gender": "GENDER",
+      "genderFemale": "Female",
+      "genderMale": "Male",
+      "genderOther": "Other",
+      "nationality": "NATIONALITY",
+      "manifestNote": "Gender, nationality and date of birth are reported to the authorities for voyages over 20 nautical miles (EU requirement).",
+      "loggedInAsNoTier": "Logged in: {name}"
+    },
+    "step5": {
+      "title": "Booking complete!",
+      "showBoardingPass": "Show QR boarding pass",
+      "backToHome": "Back to home"
+    },
+    "payment": {
+      "pageUnavailable": "The payment page could not be opened. Please try again.",
+      "notCompleted": "The payment was not completed. You can try again or cancel.",
+      "notConfirmed": "The payment could not be confirmed. Please contact customer service quoting booking {pnr}.",
+      "networkError": "Network error during confirmation. Please contact customer service quoting booking {pnr}.",
+      "title": "Secure payment via Nets",
+      "reserved": "Booking {pnr} · your place is reserved",
+      "amountDue": "Amount due",
+      "simulatorNotice": "Test environment: the Nets simulator is in use – no real money.",
+      "secureNotice": "You pay securely with Nets. You will only be charged once your booking is confirmed.",
+      "verifying": "Verifying with Nets & Core...",
+      "pay": "Pay by card or MobilePay",
+      "cancel": "Cancel payment"
+    },
+    "missingPassengerDetails": "Enter date of birth, gender and nationality – the shipping company must report them to the authorities.",
+    "missingLastName": "Enter both first name and last name.",
+    "noDeparture": "There is no departure to book. Choose another route or try again.",
+    "retry": "Try again",
+    "quote": {
+      "loading": "Calculating price…",
+      "failed": "The price could not be calculated. Try again."
+    },
+    "insurance": {
+      "title": "Cancellation insurance from {provider}",
+      "price": "DKK {amount}",
+      "lead": "Get your money back if you are prevented from travelling (e.g. due to illness).",
+      "percent": "{percent} % of the travel price",
+      "perPerson": "per person",
+      "notRefundable": "The premium is not refunded if the booking is cancelled.",
+      "terms": "Insurance terms"
+    },
+    "partner": {
+      "choose": "Choose date and tickets",
+      "change": "Change",
+      "partner": "Partner: {name}",
+      "date": "Date of visit",
+      "loadingTimes": "Loading available times…",
+      "closed": "Closed on the chosen date – choose another day.",
+      "chooseTime": "Choose entry time",
+      "remaining": "{count} available",
+      "soldOut": "sold out",
+      "loadingPrice": "Loading price…",
+      "total": "Total DKK {amount}",
+      "add": "Add",
+      "remove": "Remove",
+      "issuedLater": "The partner issues the tickets with barcodes once payment is completed.",
+      "summary": "{date}{time} · {count} tickets · {amount} DKK",
+      "expired": "The price of the partner tickets could not be confirmed – please choose them again.",
+      "types": {
+        "ADULT": "Adult",
+        "CHILD": "Child",
+        "SENIOR": "Senior",
+        "FAMILY_GROUP": "Family (2+2)"
+      },
+      "demo": "DEMO – simulated partner price, not from the partner."
+    },
+    "consent": {
+      "termsAccept": "I have read and accept Go Nordic Cruiseline's travel terms (version {version}). *",
+      "readTerms": "Read the travel terms",
+      "termsRequired": "You must accept the travel terms before you can pay.",
+      "marketing": "Yes please, send me offers and news by email",
+      "marketingHint": "Optional and without effect on your booking. You can unsubscribe at any time.",
+      "privacyLink": "How we process your personal data (privacy policy)"
+    }
+  },
+  "myBookings": {
+    "missingFields": "Please enter both your booking reference (PNR) and email/surname.",
+    "found": "✓ Booking found: {pnr}",
+    "title": "My Bookings & Boarding Passes",
+    "findHeading": "Find Your Booking",
+    "findIntro": "Enter your booking reference (PNR) and email to retrieve your boarding pass.",
+    "pnrLabel": "BOOKING NUMBER (PNR)",
+    "pnrHint": "E.g. TIDE-9021",
+    "emailLabel": "EMAIL OR SURNAME",
+    "emailHint": "E.g. mads.jensen@example.dk",
+    "findButton": "Find Booking",
+    "yourReservations": "YOUR BOOKINGS",
+    "checkInDone": "✓ Mobile check-in complete! Boarding pass issued.",
+    "checkInRejected": "Check-in rejected by the server.",
+    "lookupUnavailable": "Cannot connect to TideBook. Check your internet connection and try again.",
+    "notFound": "No booking found for the details entered. Check the booking number and email or last name."
+  },
+  "bookingDetail": {
+    "checkInDone": "✓ Mobile check-in complete! Your boarding pass has been issued.",
+    "checkInRejected": "Check-in rejected by the server.",
+    "title": "Booking {pnr}",
+    "departure": "{date} at {time} • {ship}",
+    "status": "Status",
+    "cabin": "Cabin",
+    "cabinUnknown": "Cabin",
+    "noCabin": "No cabin",
+    "passengers": "Passengers",
+    "vehicle": "Vehicle",
+    "totalPrice": "Total price",
+    "totalPaid": "DKK {amount} (Paid)",
+    "showBoardingPass": "Show QR boarding pass",
+    "checkIn": "Complete mobile check-in"
+  },
+  "boardingPass": {
+    "checkInDone": "✓ Check-in complete! Official boarding pass received.",
+    "checkInFailed": "Check-in could not be completed.",
+    "title": "Boarding Pass",
+    "statusCheckedIn": "CHECKED IN",
+    "statusReady": "READY",
+    "issuedAtCheckIn": "Official boarding pass issued at check-in",
+    "issuedAtCheckInBody": "Complete mobile check-in to receive your cryptographically signed boarding pass from TideBook Core.",
+    "checkingIn": "Checking in with Core...",
+    "checkInNow": "Check in now",
+    "passenger": "Passenger",
+    "departure": "Departure",
+    "ship": "Ferry",
+    "cabin": "Cabin",
+    "gate": "Gate",
+    "vehicle": "Vehicle",
+    "onFoot": "On foot"
+  },
+  "login": {
+    "welcome": "Welcome, {name}!",
+    "profileTitle": "Passenger Profile",
+    "logout": "Log out",
+    "title": "Passenger Login",
+    "individualOnly": "For individual passengers only. Group leader and Online Agent (OA) logins are automatically rejected.",
+    "heading": "Log in to your account",
+    "usernameLabel": "USERNAME OR EMAIL",
+    "passwordLabel": "PASSWORD",
+    "verifying": "Verifying...",
+    "submit": "Log in",
+    "demoCustomer": "Customer (Allowed)",
+    "demoAgent": "OA Agent (Rejected)",
+    "invalidCredentials": "Invalid username or password. Try again.",
+    "coreUnavailable": "Cannot connect to TideBook. Logging in requires a connection – try again shortly."
+  },
+  "profile": {
+    "editTitle": "Edit Profile & Personal Details",
+    "fullName": "Full Name",
+    "mobileNumber": "Mobile number",
+    "address": "Address",
+    "postalCode": "Postcode",
+    "city": "Town/City",
+    "licensePlateCar": "Registration Number (Car)",
+    "cancel": "Cancel",
+    "save": "Save",
+    "title": "My Profile",
+    "loginHeading": "Log in to your profile",
+    "loginIntro": "Save your personal details, address and registration number so your booking is filled in automatically.",
+    "loginOrCreate": "Log in / Create profile",
+    "loggedInTitle": "My Profile & Personal Details",
+    "memberNumber": "Member no.: {number}",
+    "bonusPoints": "Bonus points saved: {points}",
+    "personalData": "Personal Details",
+    "name": "Name",
+    "email": "Email",
+    "mobile": "Mobile",
+    "addressRow": "Address",
+    "nationality": "Nationality",
+    "passportNumber": "Passport Number",
+    "birthDate": "Date of birth",
+    "savedVehicle": "Saved Vehicle",
+    "licensePlate": "Registration Number",
+    "vehicleType": "Vehicle Type",
+    "vehicleTypeCar": "Standard Car",
+    "fuel": "Fuel type",
+    "fuelElectric": "⚡ 100% Electric (EV)",
+    "fuelCombustion": "Petrol/Diesel"
+  },
+  "destinationGuide": {
+    "title": "Discover On Board & Destinations",
+    "bannerText": "2 nights at sea and 5 hours to explore beautiful Oslo",
+    "osloTitle": "Oslo Opera House & Fjord City",
+    "osloText": "Stroll across the iconic marble roof of the Oslo Opera House and enjoy views over the fjord, the Munch Museum and Barcode.",
+    "foodTitle": "Gastronomy & Scandinavian Buffets",
+    "foodText": "Our talented chefs work their magic with fresh fish, succulent meat, Nordic cheeses and delicious desserts in 7 Seas and Explorers Steakhouse.",
+    "shopTitle": "Tax-Free Sea Shop On Board",
+    "shopText": "Shop for perfume, cosmetics, Scandinavian sweets, spirits and brand-name goods at 20–40% below high-street prices.",
+    "skiTitle": "Ski Holidays in the Norwegian Mountains",
+    "skiText": "Bring your car to Norefjell, Hemsedal, Hafjell or Trysil. Arrive in Oslo at 10:00, relaxed and well rested.",
+    "bookNow": "Book MiniCruise Now →"
+  },
+  "netsPayment": {
+    "title": "Payment · {pnr}",
+    "cancelTooltip": "Cancel payment"
+  },
+  "widgets": {
+    "bookingCard": {
+      "checkedIn": "✓ CHECKED IN",
+      "confirmed": "CONFIRMED",
+      "departure": "{date} at {time}",
+      "showBoardingPass": "Show Boarding Pass",
+      "checkIn": "Check In"
+    },
+    "cabinCard": {
+      "selected": "✓ Selected",
+      "select": "Select cabin",
+      "berths": "{count} berths/beds",
+      "decks": "Deck {decks}",
+      "free": "{count} available"
+    },
+    "appBar": {
+      "badge": "PASSENGER"
+    },
+    "banner": {
+      "defaultBadge": "SPECIAL OFFER",
+      "defaultText": "Enjoy a Ski Holiday in Norway with Go Nordic Cruiseline • Save 50% on cabins"
+    },
+    "qr": {
+      "checkInRequired": "Check-in required",
+      "gateControl": "SOLAS GATE CONTROL: {code}"
+    }
+  },
+  "countries": {
+    "DK": "Denmark",
+    "NO": "Norway",
+    "SE": "Sweden",
+    "DE": "Germany",
+    "FI": "Finland",
+    "NL": "Netherlands",
+    "PL": "Poland",
+    "GB": "United Kingdom",
+    "US": "USA",
+    "FR": "France",
+    "ES": "Spain",
+    "IT": "Italy"
+  },
+  "cabinCategories": {
+    "O3": "Owner's Suite 3P (double bed + sofa)",
+    "O2": "Owner's Suite 2P (double bed)",
+    "J3": "Owner's Suite + jacuzzi 3P",
+    "X2": "Deluxe sea view 2P (double bed)",
+    "X1": "Deluxe 1P (single bed)",
+    "C2": "Commodore sea view 2P (double bed)",
+    "WL": "Inside Commodore 2P (separate beds)",
+    "A4": "Outside cabin sea view 4P (bunks)",
+    "A4LV": "Outside, limited view 4P (bunks)",
+    "B5": "Inside family/large cabin 5P",
+    "B4": "Inside standard cabin 4P",
+    "B3": "Inside cabin 3P (bunks)",
+    "B2": "Inside cabin 2P (bunk beds)",
+    "BC": "Inside cabin 2P (bunk beds)",
+    "BD": "Inside cabin 2P (small double bed)",
+    "E4": "Economy inside 4P",
+    "H2": "Accessible cabin sea view 2P (step-free)",
+    "I2": "Accessible cabin inside 2P (step-free)",
+    "F4": "Pet cabin sea view 4P",
+    "F4LV": "Pet cabin, limited view 4P",
+    "G4": "Pet cabin inside 4P"
+  },
+  "addOns": {
+    "addon-breakfast": "Breakfast buffet (Scandinavian table)",
+    "addon-dinner": "Dinner buffet incl. drinks",
+    "addon-lounge": "Commodore VIP Lounge access",
+    "addon-wifi": "Starlink high-speed Wi-Fi",
+    "addon-pet": "Pet ticket (dog/cat)",
+    "addon-priority-boarding": "Priority boarding (Lane Priority)",
+    "addon-ev-charging": "EV charging on board (22kW Type 2)",
+    "addon-tivoli-pass": "Tivoli entry & ride pass (Copenhagen)",
+    "addon-legoland": "LEGOLAND® 1-day ticket (Billund)"
+  },
+  "config": {
+    "title": "The app is not configured",
+    "body": "This build is missing the address of TideBook Core. Build the app with --dart-define={keys}."
+  },
+  "legal": {
+    "privacyPolicy": "Privacy policy",
+    "privacyPolicySubtitle": "How we process your personal data, and your rights",
+    "terms": "Travel terms",
+    "unavailable": "The page cannot be shown – the booking site's address is not set in this app."
+  }
+}
