@@ -5,6 +5,7 @@ import '../models/addon_model.dart';
 import '../models/booking_model.dart';
 import '../services/auth_service.dart';
 import '../models/departure_model.dart';
+import '../models/route_model.dart';
 import '../services/api_service.dart';
 
 import '../services/booking_service.dart';
@@ -20,9 +21,11 @@ import '../services/site_links.dart';
 
 class BookingWizardScreen extends StatefulWidget {
   final String? initialRouteId;
+  /// 'CRUISE' (MiniCruise: ud- og hjemrejse) eller 'ONEWAY' (færgeoverfart én vej)
   final String? initialTripType;
   final DateTime? initialDate;
   final int? initialAdults;
+  final int? initialChildren;
   final bool? hasVehicle;
   final VoidCallback? onFinished;
 
@@ -32,6 +35,7 @@ class BookingWizardScreen extends StatefulWidget {
     this.initialTripType,
     this.initialDate,
     this.initialAdults,
+    this.initialChildren,
     this.hasVehicle,
     this.onFinished,
   });
@@ -49,8 +53,25 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
   late final TextEditingController _phoneCtrl;
   BookingModel? _booked;
 
+  // Søgningens valg – kan ændres i trin 1
+  late String _tripType;
+  late int _adults;
+  late int _children;
+  late bool _hasVehicle;
+  String _vehicleCategory = 'CAR_STANDARD';
+  late final TextEditingController _plateCtrl;
+  static const _vehicleCategories = ['CAR_STANDARD', 'CAR_LARGE', 'VAN_CAMPER', 'MOTORCYCLE'];
+
+  // Medrejsende (passager 2 og frem); passager 1 er kontaktpersonen nedenfor
+  final List<_FellowTraveller> _fellows = [];
+
   // Afgang – hentes fra Core for den valgte rute (og evt. dato fra søgningen)
   DepartureModel? _departure;
+
+  // MiniCruise: hjemrejsen er ruten den modsatte vej dagen efter (fra Core)
+  DepartureModel? _returnDeparture;
+  bool _returnLoading = false;
+  bool _returnFailed = false;
   bool _departuresLoading = false;
   bool _departuresFailed = false;
   bool _departuresTried = false;
@@ -76,6 +97,12 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
   void initState() {
     super.initState();
     _routeId = widget.initialRouteId;
+    _tripType = widget.initialTripType == 'CRUISE' ? 'CRUISE' : 'ONEWAY';
+    _adults = (widget.initialAdults ?? 1).clamp(1, 9);
+    _children = (widget.initialChildren ?? 0).clamp(0, 9);
+    _hasVehicle = widget.hasVehicle ?? false;
+    _plateCtrl = TextEditingController();
+    _syncFellows();
     final u = AuthService().currentUser;
     // Kun kundens egne data – ingen eksempelnavne i felterne
     _nameCtrl = TextEditingController(text: u?.fullName ?? '');
@@ -93,7 +120,95 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
     _nameCtrl.dispose();
     _emailCtrl.dispose();
     _phoneCtrl.dispose();
+    _plateCtrl.dispose();
+    for (final f in _fellows) {
+      f.dispose();
+    }
     super.dispose();
+  }
+
+  bool get _isCruise => _tripType == 'CRUISE';
+  int get _paxCount => _adults + _children;
+
+  /// Medrejsende svarer til antal voksne (minus kontaktpersonen) og børn – udfyldte felter bevares.
+  void _syncFellows() {
+    final types = [...List.filled(_adults - 1, 'ADULT'), ...List.filled(_children, 'CHILD')];
+    for (var i = 0; i < types.length; i++) {
+      if (i < _fellows.length && _fellows[i].type == types[i]) continue;
+      if (i < _fellows.length) {
+        _fellows[i].dispose();
+        _fellows[i] = _FellowTraveller(types[i]);
+      } else {
+        _fellows.add(_FellowTraveller(types[i]));
+      }
+    }
+    while (_fellows.length > types.length) {
+      _fellows.removeLast().dispose();
+    }
+  }
+
+  /// Rejsetype, antal rejsende eller bil er ændret: kahyt, tilvalg og pris beregnes igen.
+  void _onPartyChanged() {
+    setState(() {
+      _syncFellows();
+      if (_cabin != null && _cabin!.berths < _paxCount) _cabin = null;
+      _addOnCatalog = null;
+      _serverTotal = null;
+      _quoteFailed = false;
+    });
+  }
+
+  void _setTripType(String type) {
+    if (type == _tripType) return;
+    setState(() {
+      _tripType = type;
+      _cabins = null;
+      _cabin = null;
+      _serverTotal = null;
+    });
+    _loadReturnDeparture();
+  }
+
+  /// Ruten den modsatte vej (havnene byttet om) blandt Core's ruter.
+  RouteModel? _returnRouteFor(String routeId) {
+    final routes = BookingService().routes;
+    final out = routes.where((r) => r.id == routeId).firstOrNull;
+    if (out == null || out.originPortCode.isEmpty) return null;
+    return routes
+        .where((r) => r.id != out.id && r.originPortCode == out.destinationPortCode && r.destinationPortCode == out.originPortCode)
+        .firstOrNull;
+  }
+
+  /// MiniCruise: første afgang hjem dagen efter udrejsen (efter ankomst). Findes ingen, kan der ikke bookes MiniCruise.
+  Future<void> _loadReturnDeparture() async {
+    final dep = _departure;
+    final back = dep == null ? null : _returnRouteFor(dep.routeId);
+    if (!_isCruise || dep == null || back == null) {
+      setState(() {
+        _returnDeparture = null;
+        _returnLoading = false;
+        _returnFailed = false;
+      });
+      return;
+    }
+    setState(() {
+      _returnDeparture = null;
+      _returnLoading = true;
+      _returnFailed = false;
+    });
+    final out = DateTime.parse(dep.portDate);
+    final nextDay = _isoDate(DateTime.utc(out.year, out.month, out.day + 1));
+    final list = await ApiService().fetchDepartures(routeId: back.id, date: nextDay);
+    if (!mounted || dep.id != _departure?.id || !_isCruise) return;
+    final candidates = (list ?? const <DepartureModel>[])
+        .where((d) => d.routeId == back.id && d.portDate == nextDay && d.scheduledDepartureTime.isAfter(dep.scheduledArrivalTime))
+        .toList()
+      ..sort((a, b) => a.scheduledDepartureTime.compareTo(b.scheduledDepartureTime));
+    setState(() {
+      _returnLoading = false;
+      _returnFailed = list == null;
+      _returnDeparture = candidates.firstOrNull;
+    });
   }
 
   /// Ruterne kommer fra Core (evt. efter appen er startet): vælg den første, hvis ingen er valgt.
@@ -113,6 +228,7 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
     setState(() {
       _routeId = routeId;
       _departure = null;
+      _returnDeparture = null;
       _departuresTried = false;
       _cabins = null;
       _cabin = null;
@@ -161,6 +277,7 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
       _departuresFailed = failed && next == null;
       _departure = next;
     });
+    _loadReturnDeparture();
   }
 
   /// Ledige kahytter på afgangen, samlet pr. kategori.
@@ -171,8 +288,19 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
       _cabinsLoading = true;
       _cabinsFailed = false;
     });
-    final raw = await ApiService().fetchDepartureCabins(dep.id);
-    if (!mounted || dep.id != _departure?.id) return;
+    final ret = _isCruise ? _returnDeparture : null;
+    final results = await Future.wait([
+      ApiService().fetchDepartureCabins(dep.id),
+      if (ret != null) ApiService().fetchDepartureCabins(ret.id),
+    ]);
+    if (!mounted || dep.id != _departure?.id || ret?.id != (_isCruise ? _returnDeparture?.id : null)) return;
+    var raw = results.first;
+    if (ret != null) {
+      // MiniCruise: samme kahyt ud og hjem – kun kahytter, der er ledige på begge afgange
+      final back = results[1];
+      final freeBack = back == null ? null : CabinModel.fromCoreCabins(back).expand((c) => c.freeCabinIds).toSet();
+      raw = (raw == null || freeBack == null) ? null : raw.where((c) => freeBack.contains(c['id']?.toString())).toList();
+    }
     setState(() {
       _cabinsLoading = false;
       _cabinsFailed = raw == null;
@@ -184,7 +312,7 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
     });
   }
 
-  /// Aktive tilvalg fra Core. Kladden har ingen bil og én passager, så Core filtrerer derefter.
+  /// Aktive tilvalg fra Core – filtreret efter antal rejsende og om der er bil med.
   Future<void> _loadAddOns() async {
     setState(() {
       _addOnsLoading = true;
@@ -192,8 +320,8 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
     });
     final list = await ApiService().fetchAddOns(
       travelDate: _departure?.scheduledDepartureTime,
-      hasVehicle: false,
-      passengerCount: 1,
+      hasVehicle: _hasVehicle,
+      passengerCount: _paxCount,
       departureId: _departure?.id,
     );
     if (!mounted) return;
@@ -247,7 +375,7 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
       _quoteLoading = true;
       _quoteFailed = false;
     });
-    final draft = _buildDraft(dep, firstName: 'Pris', lastName: 'Beregning', name: _nameCtrl.text, email: _emailCtrl.text, phone: _phoneCtrl.text);
+    final draft = _buildDraft(dep, firstName: 'Pris', lastName: 'Beregning', name: _nameCtrl.text, email: _emailCtrl.text, phone: _phoneCtrl.text, forQuote: true);
     final quote = await ApiService().quote(draft);
     if (!mounted || seq != _quoteSeq) return; // et nyere valg er på vej
     setState(() {
@@ -261,8 +389,44 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
     });
   }
 
-  Map<String, dynamic> _buildDraft(DepartureModel dep, {required String firstName, required String lastName, required String name, required String email, required String phone}) {
+  /// Et ben af rejsen med rutens havne fra Core (MiniCruise har to: ud og hjem).
+  Map<String, dynamic> _leg(int index, DepartureModel d, String? cabinId) {
+    final route = BookingService().routes.where((r) => r.id == d.routeId).firstOrNull?.toJson();
+    return {
+      'legIndex': index,
+      'routeId': d.routeId,
+      'departureId': d.id,
+      'departureTime': d.scheduledDepartureTime.toUtc().toIso8601String(),
+      'arrivalTime': d.scheduledArrivalTime.toUtc().toIso8601String(),
+      'vesselId': d.vesselId,
+      'originPort': ?route?['originPort'],
+      'destinationPort': ?route?['destinationPort'],
+      'selectedCabinIds': [?cabinId],
+    };
+  }
+
+  /// Køretøjet til vogndækket. Mål som på bookingsitet ud fra typen; nummerpladen skriver kunden selv.
+  Map<String, dynamic>? _vehicle() {
+    if (!_hasVehicle) return null;
+    final c = _vehicleCategory;
+    return {
+      'category': c,
+      'licensePlate': _plateCtrl.text.trim().toUpperCase(),
+      'country': ?_nationality,
+      'lengthMeters': c == 'CAR_LARGE' ? 5.2 : c == 'VAN_CAMPER' ? 6.8 : c == 'MOTORCYCLE' ? 2.2 : 4.8,
+      'heightMeters': c == 'VAN_CAMPER' ? 2.8 : c == 'MOTORCYCLE' ? 1.3 : 1.6,
+      'widthMeters': c == 'MOTORCYCLE' ? 0.9 : 1.9,
+      'weightTonnes': c == 'VAN_CAMPER' ? 3.5 : c == 'MOTORCYCLE' ? 0.3 : 1.8,
+      'hasRoofBox': false,
+      'hasTrailer': false,
+      'isElectric': false,
+      'isHazardousCargo': false,
+    };
+  }
+
+  Map<String, dynamic> _buildDraft(DepartureModel dep, {required String firstName, required String lastName, required String name, required String email, required String phone, bool forQuote = false}) {
     final cabinId = _cabin?.cabinId;
+    final ret = _isCruise ? _returnDeparture : null;
     return {
       // Kun versionen og kundens egen afkrydsning – Core sætter tidspunktet for accepten
       'terms_version_id': SiteLinks.termsVersionId,
@@ -272,6 +436,10 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
       'routeId': dep.routeId,
       'departureId': dep.id,
       'outboundDate': dep.portDate,
+      // MiniCruise: hjemrejsen på samme booking (Core kræver præcis to ben)
+      'returnDepartureId': ?ret?.id,
+      'returnDate': ?ret?.portDate,
+      'legs': [_leg(1, dep, cabinId), if (ret != null) _leg(2, ret, cabinId)],
       'ticketClass': 'STANDARD', // samme standard som bookingsitet; PREMIUM har morgenmad inkluderet (0 kr.) i TideRMS
       'passengers': [
         {
@@ -283,8 +451,20 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
           'nationality': ?_nationality,
           'dateOfBirth': ?_birthDate,
           'gender': ?_gender,
-        }
+        },
+        for (var i = 0; i < _fellows.length; i++)
+          {
+            'id': 'P${i + 2}',
+            // Prisberegningen bruger kun passagertypen – navnene er kundens egne ved betalingen
+            'firstName': forQuote ? 'Pris' : _fellows[i].firstCtrl.text.trim(),
+            'lastName': forQuote ? 'Beregning' : _fellows[i].lastCtrl.text.trim(),
+            'type': _fellows[i].type,
+            'nationality': ?_fellows[i].nationality,
+            'dateOfBirth': ?_fellows[i].birthDate,
+            'gender': ?_fellows[i].gender,
+          },
       ],
+      'vehicle': ?_vehicle(),
       'leadContact': {
         'fullName': name,
         'email': email,
@@ -325,6 +505,25 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
     if (_gender == null || _nationality == null || _birthDate == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(tr('bookingWizard.missingPassengerDetails'))),
+      );
+      return;
+    }
+    String? fellowProblem;
+    for (var i = 0; i < _fellows.length && fellowProblem == null; i++) {
+      final f = _fellows[i];
+      if (f.firstCtrl.text.trim().isEmpty || f.lastCtrl.text.trim().isEmpty || f.birthDate == null || f.gender == null || f.nationality == null) {
+        fellowProblem = tr('bookingWizard.step4.missingFellowDetails', {'n': i + 2});
+      } else if (f.type == 'CHILD' && _departure != null && _ageOn(f.birthDate!, _departure!.scheduledDepartureTime) > 15) {
+        fellowProblem = tr('bookingWizard.step4.childTooOld', {'n': i + 2});
+      }
+    }
+    if (fellowProblem != null) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(fellowProblem)));
+      return;
+    }
+    if (_hasVehicle && _plateCtrl.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(tr('bookingWizard.step4.missingPlate'))),
       );
       return;
     }
@@ -425,6 +624,15 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
   }
 
   String _two(int n) => n.toString().padLeft(2, '0');
+
+  /// Alder i hele år på rejsedagen
+  int _ageOn(String birthDate, DateTime day) {
+    final b = DateTime.tryParse(birthDate);
+    if (b == null) return 0;
+    var age = day.year - b.year;
+    if (day.month < b.month || (day.month == b.month && day.day < b.day)) age--;
+    return age;
+  }
 
   /// Indlæsning, fejl (med "Prøv igen") eller tom tilstand – bruges for alt, der hentes fra Core.
   Widget _status({required bool loading, required bool failed, required String loadingText, required String failedText, VoidCallback? onRetry, String? emptyText}) {
@@ -564,6 +772,8 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
+        _partyCard(),
+        const SizedBox(height: 12),
         Text(tr('bookingWizard.step1.title'), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
         if (routes.isEmpty)
           _status(
@@ -602,17 +812,30 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
                 emptyText: tr('bookingWizard.step1.noDepartures'),
               );
             }
-            final t = portTime(dep.scheduledDepartureTime); // havnens tid, ikke telefonens
+            final ret = _returnDeparture;
             return Padding(
               padding: const EdgeInsets.only(bottom: 12),
-              child: Text(
-                tr('bookingWizard.step1.departure', {'date': '${t.day}/${t.month}-${t.year}', 'time': '${_two(t.hour)}:${_two(t.minute)}'}),
-                style: const TextStyle(fontWeight: FontWeight.w600, color: GoNordicTheme.pine),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _departureLine('bookingWizard.step1.departure', dep),
+                  if (_isCruise)
+                    ret != null
+                        ? _departureLine('bookingWizard.step1.returnDeparture', ret)
+                        : _status(
+                            loading: _returnLoading,
+                            failed: _returnFailed,
+                            loadingText: tr('bookingWizard.step1.returnLoading'),
+                            failedText: tr('bookingWizard.step1.returnUnavailable'),
+                            onRetry: _loadReturnDeparture,
+                            emptyText: tr('bookingWizard.step1.noReturn'),
+                          ),
+                ],
               ),
             );
           }),
         ElevatedButton(
-          onPressed: _departure == null
+          onPressed: _departure == null || (_isCruise && _returnDeparture == null)
               ? null
               : () {
                   setState(() => _step = 2);
@@ -624,8 +847,95 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
     );
   }
 
+  /// Afgangstid i havnens tid, ikke telefonens
+  Widget _departureLine(String key, DepartureModel d) {
+    final t = portTime(d.scheduledDepartureTime);
+    return Text(
+      tr(key, {'date': '${t.day}/${t.month}-${t.year}', 'time': '${_two(t.hour)}:${_two(t.minute)}'}),
+      style: const TextStyle(fontWeight: FontWeight.w600, color: GoNordicTheme.pine),
+    );
+  }
+
+  /// Søgningens valg: rejsetype, rejsende og køretøj – kan rettes her.
+  Widget _partyCard() {
+    Widget counter(String label, int value, int min, ValueChanged<int> onChanged, String key) => Row(
+      children: [
+        Expanded(child: Text(label, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13))),
+        IconButton(
+          key: Key('$key-minus'),
+          icon: const Icon(Icons.remove_circle_outline),
+          onPressed: value > min ? () => onChanged(value - 1) : null,
+        ),
+        Text('$value', key: Key('$key-count'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+        IconButton(
+          key: Key('$key-plus'),
+          icon: const Icon(Icons.add_circle_outline),
+          onPressed: value < 9 ? () => onChanged(value + 1) : null,
+        ),
+      ],
+    );
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(14, 10, 6, 6),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Wrap(
+              spacing: 8,
+              children: [
+                ChoiceChip(
+                  key: const Key('wizard-trip-cruise'),
+                  label: Text(tr('bookingWizard.step1.cruise')),
+                  selected: _isCruise,
+                  onSelected: (_) => _setTripType('CRUISE'),
+                ),
+                ChoiceChip(
+                  key: const Key('wizard-trip-oneway'),
+                  label: Text(tr('bookingWizard.step1.oneway')),
+                  selected: !_isCruise,
+                  onSelected: (_) => _setTripType('ONEWAY'),
+                ),
+              ],
+            ),
+            Text(tr(_isCruise ? 'bookingWizard.step1.cruiseHint' : 'bookingWizard.step1.onewayHint'), style: const TextStyle(fontSize: 11, color: GoNordicTheme.textSecondary)),
+            const Divider(height: 16),
+            counter(tr('explore.passengerModal.adults'), _adults, 1, (v) { _adults = v; _onPartyChanged(); }, 'wizard-adults'),
+            counter(tr('explore.passengerModal.children'), _children, 0, (v) { _children = v; _onPartyChanged(); }, 'wizard-children'),
+            SwitchListTile(
+              key: const Key('wizard-vehicle'),
+              contentPadding: const EdgeInsets.only(right: 8),
+              dense: true,
+              title: Text(tr('explore.passengerModal.bringVehicle'), style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+              value: _hasVehicle,
+              activeThumbColor: GoNordicTheme.pine,
+              onChanged: (v) { _hasVehicle = v; _onPartyChanged(); },
+            ),
+            if (_hasVehicle)
+              Padding(
+                padding: const EdgeInsets.only(right: 8, bottom: 8),
+                child: DropdownButtonFormField<String>(
+                  key: const Key('wizard-vehicle-category'),
+                  initialValue: _vehicleCategory,
+                  decoration: InputDecoration(labelText: tr('bookingWizard.vehicle.category')),
+                  items: _vehicleCategories.map((c) => DropdownMenuItem(value: c, child: Text(tr('bookingWizard.vehicle.categories.$c')))).toList(),
+                  onChanged: (v) {
+                    if (v == null) return;
+                    _vehicleCategory = v;
+                    _onPartyChanged();
+                  },
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _step2() {
-    final cabins = _cabins;
+    // Alle rejsende skal kunne være i kahytten (Core afviser ellers bookingen)
+    final all = _cabins;
+    final cabins = all?.where((c) => c.berths >= _paxCount).toList();
+    final hidden = (all?.length ?? 0) - (cabins?.length ?? 0);
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
@@ -638,9 +948,14 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
             loadingText: tr('bookingWizard.step2.loading'),
             failedText: tr('bookingWizard.step2.unavailable'),
             onRetry: _loadCabins,
-            emptyText: cabins == null ? null : tr('bookingWizard.step2.none'),
+            emptyText: cabins == null ? null : tr(hidden > 0 ? 'bookingWizard.step2.noneForParty' : 'bookingWizard.step2.none', {'count': _paxCount}),
           )
-        else
+        else ...[
+          if (hidden > 0)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: Text(tr('bookingWizard.step2.capacityNote', {'count': _paxCount}), style: const TextStyle(fontSize: 11, color: GoNordicTheme.textSecondary)),
+            ),
           ...cabins.map((c) => CabinCard(
             cabin: c,
             isSelected: _cabin?.category == c.category,
@@ -649,6 +964,7 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
               _refreshQuote();
             },
           )),
+        ],
         if (_cabin != null) _quoteView(),
         const SizedBox(height: 12),
         ElevatedButton(
@@ -806,44 +1122,17 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(tr('bookingWizard.step4.travellerTitle'), style: const TextStyle(fontWeight: FontWeight.bold)),
+                Text(_fellows.isEmpty ? tr('bookingWizard.step4.travellerTitle') : tr('bookingWizard.step4.travellerN', {'n': 1, 'type': tr('bookingWizard.step4.adult')}), style: const TextStyle(fontWeight: FontWeight.bold)),
                 const SizedBox(height: 8),
-                InkWell(
-                  key: const Key('wizard-birthdate'),
-                  onTap: () async {
-                    final now = DateTime.now();
-                    final picked = await showDatePicker(
-                      context: context,
-                      initialDate: _birthDate != null ? DateTime.tryParse(_birthDate!) ?? DateTime(now.year - 30) : DateTime(now.year - 30),
-                      firstDate: DateTime(1900),
-                      lastDate: now,
-                    );
-                    if (picked != null) setState(() => _birthDate = picked.toIso8601String().split('T').first);
-                  },
-                  child: InputDecorator(
-                    decoration: InputDecoration(labelText: tr('bookingWizard.step4.birthDate')),
-                    child: Text(_birthDate ?? tr('bookingWizard.step4.choose')),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                DropdownButtonFormField<String>(
-                  key: const Key('wizard-gender'),
-                  initialValue: _gender,
-                  decoration: InputDecoration(labelText: tr('bookingWizard.step4.gender')),
-                  items: [
-                    DropdownMenuItem(value: 'FEMALE', child: Text(tr('bookingWizard.step4.genderFemale'))),
-                    DropdownMenuItem(value: 'MALE', child: Text(tr('bookingWizard.step4.genderMale'))),
-                    DropdownMenuItem(value: 'OTHER', child: Text(tr('bookingWizard.step4.genderOther'))),
-                  ],
-                  onChanged: (v) => setState(() => _gender = v),
-                ),
-                const SizedBox(height: 8),
-                DropdownButtonFormField<String>(
-                  key: const Key('wizard-nationality'),
-                  initialValue: _countries.contains(_nationality) ? _nationality : null,
-                  decoration: InputDecoration(labelText: tr('bookingWizard.step4.nationality')),
-                  items: _countries.map((c) => DropdownMenuItem(value: c, child: Text(tr('countries.$c')))).toList(),
-                  onChanged: (v) => setState(() => _nationality = v),
+                ..._travellerFields(
+                  keyPrefix: 'wizard',
+                  birthDate: _birthDate,
+                  onBirthDate: (v) => setState(() => _birthDate = v),
+                  gender: _gender,
+                  onGender: (v) => setState(() => _gender = v),
+                  nationality: _nationality,
+                  onNationality: (v) => setState(() => _nationality = v),
+                  defaultAge: 30,
                 ),
                 const SizedBox(height: 6),
                 Text(tr('bookingWizard.step4.manifestNote'), style: const TextStyle(fontSize: 11, color: Colors.black54)),
@@ -851,6 +1140,8 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
             ),
           ),
         ),
+        for (var i = 0; i < _fellows.length; i++) _fellowCard(i),
+        if (_hasVehicle) _vehicleCard(),
         const SizedBox(height: 8),
         _insuranceTile(),
         const SizedBox(height: 8),
@@ -868,6 +1159,121 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
       ],
     );
   }
+
+  /// Fødselsdato, køn og nationalitet til passagerlisten – samme felter for alle rejsende.
+  List<Widget> _travellerFields({
+    required String keyPrefix,
+    required String? birthDate,
+    required ValueChanged<String> onBirthDate,
+    required String? gender,
+    required ValueChanged<String?> onGender,
+    required String? nationality,
+    required ValueChanged<String?> onNationality,
+    required int defaultAge,
+  }) {
+    return [
+      InkWell(
+        key: Key('$keyPrefix-birthdate'),
+        onTap: () async {
+          final now = DateTime.now();
+          final picked = await showDatePicker(
+            context: context,
+            initialDate: birthDate != null ? DateTime.tryParse(birthDate) ?? DateTime(now.year - defaultAge) : DateTime(now.year - defaultAge),
+            firstDate: DateTime(1900),
+            lastDate: now,
+          );
+          if (picked != null) onBirthDate(picked.toIso8601String().split('T').first);
+        },
+        child: InputDecorator(
+          decoration: InputDecoration(labelText: tr('bookingWizard.step4.birthDate')),
+          child: Text(birthDate ?? tr('bookingWizard.step4.choose')),
+        ),
+      ),
+      const SizedBox(height: 8),
+      DropdownButtonFormField<String>(
+        key: Key('$keyPrefix-gender'),
+        initialValue: gender,
+        decoration: InputDecoration(labelText: tr('bookingWizard.step4.gender')),
+        items: [
+          DropdownMenuItem(value: 'FEMALE', child: Text(tr('bookingWizard.step4.genderFemale'))),
+          DropdownMenuItem(value: 'MALE', child: Text(tr('bookingWizard.step4.genderMale'))),
+          DropdownMenuItem(value: 'OTHER', child: Text(tr('bookingWizard.step4.genderOther'))),
+        ],
+        onChanged: onGender,
+      ),
+      const SizedBox(height: 8),
+      DropdownButtonFormField<String>(
+        key: Key('$keyPrefix-nationality'),
+        initialValue: _countries.contains(nationality) ? nationality : null,
+        decoration: InputDecoration(labelText: tr('bookingWizard.step4.nationality')),
+        items: _countries.map((c) => DropdownMenuItem(value: c, child: Text(tr('countries.$c')))).toList(),
+        onChanged: onNationality,
+      ),
+    ];
+  }
+
+  /// Medrejsende nr. i+2: navn og passagerlistens oplysninger
+  Widget _fellowCard(int i) {
+    final f = _fellows[i];
+    final prefix = 'wizard-p${i + 2}';
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: Card(
+        key: Key(prefix),
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                tr('bookingWizard.step4.travellerN', {'n': i + 2, 'type': tr(f.type == 'CHILD' ? 'bookingWizard.step4.child' : 'bookingWizard.step4.adult')}),
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              TextField(key: Key('$prefix-first'), controller: f.firstCtrl, decoration: InputDecoration(labelText: tr('bookingWizard.step4.firstName'))),
+              const SizedBox(height: 8),
+              TextField(key: Key('$prefix-last'), controller: f.lastCtrl, decoration: InputDecoration(labelText: tr('bookingWizard.step4.lastName'))),
+              const SizedBox(height: 8),
+              ..._travellerFields(
+                keyPrefix: prefix,
+                birthDate: f.birthDate,
+                onBirthDate: (v) => setState(() => f.birthDate = v),
+                gender: f.gender,
+                onGender: (v) => setState(() => f.gender = v),
+                nationality: f.nationality,
+                onNationality: (v) => setState(() => f.nationality = v),
+                defaultAge: f.type == 'CHILD' ? 8 : 30,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Køretøjet: typen er valgt i trin 1, nummerpladen skrives her
+  Widget _vehicleCard() => Padding(
+    padding: const EdgeInsets.only(top: 8),
+    child: Card(
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(tr('bookingWizard.vehicle.title'), style: const TextStyle(fontWeight: FontWeight.bold)),
+            Text(tr('bookingWizard.vehicle.categories.$_vehicleCategory'), style: const TextStyle(fontSize: 12, color: GoNordicTheme.textSecondary)),
+            const SizedBox(height: 8),
+            TextField(
+              key: const Key('wizard-plate'),
+              controller: _plateCtrl,
+              textCapitalization: TextCapitalization.characters,
+              decoration: InputDecoration(labelText: tr('bookingWizard.vehicle.licensePlate')),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
 
   /// Accept af rejsebetingelserne (påkrævet) og samtykke til markedsføring (frivilligt) – ingen er forudvalgt.
   Widget _consentCard() => Card(
@@ -963,6 +1369,23 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
       ),
     ),
   );
+}
+
+/// En medrejsende (passager 2 og frem). Typen følger søgningen: voksen eller barn (0–15 år).
+class _FellowTraveller {
+  final String type;
+  final firstCtrl = TextEditingController();
+  final lastCtrl = TextEditingController();
+  String? birthDate;
+  String? gender;
+  String? nationality;
+
+  _FellowTraveller(this.type);
+
+  void dispose() {
+    firstCtrl.dispose();
+    lastCtrl.dispose();
+  }
 }
 
 class _NetsPaymentSheet extends StatefulWidget {

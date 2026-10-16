@@ -444,12 +444,18 @@ class _ExploreScreenState extends State<ExploreScreen> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => BookingWizardScreen(
+                      builder: (wizardContext) => BookingWizardScreen(
                         initialRouteId: _routeId,
                         initialTripType: _tripType,
                         initialDate: _date,
                         initialAdults: _adults,
+                        initialChildren: _children,
                         hasVehicle: _hasVehicle,
+                        // Efter bookingen: tilbage til fanerne og videre til "Bookinger"
+                        onFinished: () {
+                          Navigator.pop(wizardContext);
+                          widget.onNavigateToTab?.call(1);
+                        },
                       ),
                     ),
                   );
